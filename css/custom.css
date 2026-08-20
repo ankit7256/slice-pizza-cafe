@@ -1,0 +1,13 @@
+/* Custom Styles for Slice Pizza & Cafe */
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Hide scrollbar for category pills */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
