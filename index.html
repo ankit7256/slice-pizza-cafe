@@ -3,27 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slice Pizza & Cafe - Order Hot & Fresh Food</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Slice Pizza & Cafe - Order Hot & Fresh Food Online</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
-  <!-- EmailJS SDK -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <link rel="stylesheet" href="css/custom.css">
 </head>
 <body class="bg-[#faf7f2] text-gray-800 antialiased selection:bg-red-500 selection:text-white">
 
   <!-- Top Announcement Bar -->
-  <div class="bg-red-600 text-white text-xs md:text-sm py-2 px-4 text-center font-medium flex justify-center items-center gap-2">
-    <span>🔥 Freshly Baked Hand-Tossed Pizzas & Fresh Brewed Cafe Drinks!</span>
+  <div id="announcement-bar" class="bg-red-600 text-white text-xs md:text-sm py-2 px-4 text-center font-medium flex justify-center items-center gap-2">
+    <span>🔥 Freshly Baked Hand-Tossed Pizzas & Cafe Specials!</span>
     <span class="hidden md:inline">|</span>
-    <span class="hidden md:inline"><i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +91 7667610195</span>
+    <span class="hidden md:inline" id="top-phone-display"><i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +91 7667610195</span>
   </div>
 
-  <!-- Navbar -->
+  <!-- Navbar (Admin Button completely removed from public UI) -->
   <nav class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-gray-100 shadow-sm transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
@@ -33,21 +28,34 @@
           <i class="fa-solid fa-pizza-slice"></i>
         </div>
         <div>
-          <h1 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-1.5">
+          <h1 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-1.5" id="nav-brand-title">
             SLICE <span class="text-red-600 font-serif italic">Pizza & Cafe</span>
           </h1>
           <p class="text-[10px] text-gray-400 font-semibold tracking-wider uppercase">Authentic Taste & Quality</p>
         </div>
       </a>
 
+      <!-- Navigation Links -->
+      <div class="hidden lg:flex items-center gap-6 text-sm font-bold text-gray-700">
+        <a href="index.html" class="text-red-600 hover:text-red-600 transition">Home</a>
+        <a href="#menu-section" class="hover:text-red-600 transition">Our Menu</a>
+        <a href="track.html" class="hover:text-red-600 transition flex items-center gap-1.5 text-amber-600">
+          <i class="fa-solid fa-location-crosshairs animate-pulse"></i> Track Order
+        </a>
+        <a href="customers.html" class="hover:text-red-600 transition">Our Customers</a>
+        <a href="about.html" class="hover:text-red-600 transition">About Us</a>
+        <a href="policy.html" class="hover:text-red-600 transition">Policy</a>
+      </div>
+
       <!-- Quick Actions -->
       <div class="flex items-center gap-3 sm:gap-4">
-        <a href="admin.html" class="text-gray-500 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition" title="Admin Dashboard">
-          <i class="fa-solid fa-gear text-lg"></i>
-          <span class="hidden sm:inline text-xs font-semibold ml-1">Admin</span>
+        <!-- Instagram Link -->
+        <a id="nav-instagram-link" href="#" target="_blank" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 text-white flex items-center justify-center text-lg shadow-md hover:scale-105 transition" title="Follow us on Instagram">
+          <i class="fa-brands fa-instagram"></i>
         </a>
 
-        <button onclick="toggleCartModal(true)" class="relative flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-5 py-2.5 rounded-full font-bold shadow-md shadow-red-200 transition-all hover:scale-[1.02] active:scale-95">
+        <!-- Cart Trigger -->
+        <button onclick="toggleCartModal(true)" class="relative flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 sm:px-5 py-2.5 rounded-full font-bold shadow-md shadow-red-200 transition-all hover:scale-[1.02] active:scale-95">
           <i class="fa-solid fa-cart-shopping"></i>
           <span class="hidden sm:inline">Cart</span>
           <span id="nav-cart-badge" class="bg-amber-400 text-gray-950 text-xs px-2 py-0.5 rounded-full font-extrabold ml-0.5">0</span>
@@ -57,60 +65,64 @@
     </div>
   </nav>
 
-  <!-- Hero Header -->
-  <section class="relative bg-gradient-to-b from-red-50/70 via-orange-50/30 to-transparent py-10 md:py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid md:grid-cols-12 gap-8 items-center">
-        
-        <div class="md:col-span-7 space-y-5 text-center md:text-left">
-          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-xs sm:text-sm font-bold tracking-wide">
-            <span class="animate-pulse">✨</span> Best Gourmet Pizzas & Cold Coffees
-          </div>
-          <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-950 tracking-tight leading-tight">
-            Hungry? Order <span class="text-red-600 underline decoration-amber-400 decoration-wavy decoration-2">Delicious Pizza</span> Directly on WhatsApp!
-          </h2>
-          <p class="text-gray-600 text-base sm:text-lg max-w-xl mx-auto md:mx-0">
-            Dine-in at our cafe, grab a takeaway or get hot pizza delivered to your doorstep. Zero hidden app charges!
-          </p>
+  <!-- Mobile Nav Sub-bar -->
+  <div class="lg:hidden bg-white border-b border-gray-100 py-2.5 px-4 flex items-center justify-around text-xs font-bold text-gray-600">
+    <a href="index.html" class="text-red-600">Home</a>
+    <a href="#menu-section">Menu</a>
+    <a href="track.html" class="text-amber-600 font-extrabold flex items-center gap-1">
+      <i class="fa-solid fa-location-dot"></i> Track
+    </a>
+    <a href="customers.html">Customers</a>
+    <a href="about.html">About</a>
+    <a href="policy.html">Policy</a>
+  </div>
 
-          <!-- Order Type Badges -->
-          <div class="pt-2 flex flex-wrap gap-3 justify-center md:justify-start">
-            <span class="px-3.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold shadow-sm text-gray-700 flex items-center gap-1.5">
-              <i class="fa-solid fa-motorcycle text-red-600"></i> Fast Home Delivery
-            </span>
-            <span class="px-3.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold shadow-sm text-gray-700 flex items-center gap-1.5">
-              <i class="fa-solid fa-bag-shopping text-amber-600"></i> Quick Takeaway
-            </span>
-            <span class="px-3.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold shadow-sm text-gray-700 flex items-center gap-1.5">
-              <i class="fa-solid fa-utensils text-green-600"></i> Dine-in (Table Order)
-            </span>
-          </div>
-        </div>
-
-        <div class="md:col-span-5 flex justify-center">
-          <div class="relative w-full max-w-sm">
-            <div class="absolute -inset-2 bg-gradient-to-r from-red-400 to-amber-400 rounded-3xl blur-2xl opacity-30 animate-pulse"></div>
-            <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80" 
-                 alt="Slice Pizza Featured" 
-                 class="relative rounded-3xl shadow-2xl object-cover w-full h-80 border-4 border-white">
-            <div class="absolute -bottom-4 -left-4 bg-white p-3.5 rounded-2xl shadow-xl border border-gray-100 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-green-100 text-green-700 flex items-center justify-center font-bold text-lg">
-                <i class="fa-brands fa-whatsapp"></i>
-              </div>
-              <div>
-                <p class="text-xs font-bold text-gray-900">Direct WhatsApp Order</p>
-                <p class="text-[11px] text-gray-500">Instant Kitchen Confirmation</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
+  <!-- HERO SLIDER SECTION (Auto-sliding 5-6 slides) -->
+  <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div class="relative overflow-hidden rounded-3xl shadow-2xl bg-gray-900 min-h-[380px] sm:min-h-[460px] md:min-h-[500px] flex items-center">
+      
+      <!-- Slide Track -->
+      <div id="hero-slider-track" class="w-full h-full relative">
+        <!-- Injected via JS -->
       </div>
+
+      <!-- Slider Controls (Prev / Next) -->
+      <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/40 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center transition border border-white/20 z-20">
+        <i class="fa-solid fa-chevron-left text-sm"></i>
+      </button>
+      <button onclick="nextSlide()" class="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/40 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center transition border border-white/20 z-20">
+        <i class="fa-solid fa-chevron-right text-sm"></i>
+      </button>
+
+      <!-- Dots Indicators -->
+      <div id="slider-dots" class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+        <!-- Injected via JS -->
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Live Order Tracker Quick Banner -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3 text-center sm:text-left">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-truck-ramp-box"></i>
+        </div>
+        <div>
+          <h4 class="font-black text-sm sm:text-base">Track Your Live Order Status</h4>
+          <p class="text-xs text-amber-100">Check if your pizza is Preparing, Out for Delivery, or Ready!</p>
+        </div>
+      </div>
+      <a href="track.html" class="whitespace-nowrap px-5 py-2.5 bg-white text-gray-900 hover:bg-amber-100 rounded-xl text-xs font-black shadow transition flex items-center gap-2">
+        <span>Open Tracking System</span>
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      </a>
     </div>
   </section>
 
   <!-- Sticky Categories Bar -->
-  <section class="sticky top-20 z-30 bg-white border-y border-gray-100 shadow-sm py-3 px-4">
+  <section id="menu-section" class="sticky top-20 z-30 bg-white/95 backdrop-blur-md border-y border-gray-100 shadow-sm py-3 px-4 mt-8">
     <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth" id="category-pills">
       <!-- Generated via JS -->
     </div>
@@ -141,19 +153,35 @@
         <i class="fa-solid fa-pizza-slice"></i>
       </div>
       <h3 class="text-xl font-bold text-gray-900">Koi item nahi mila!</h3>
-      <p class="text-gray-500 text-sm mt-1">Dusra naam search karein ya category filter clear karein.</p>
+      <p class="text-gray-500 text-sm mt-1">Dusra naam search karein ya category filter change karein.</p>
     </div>
   </main>
 
-  <!-- Floating Cart Button (Mobile) -->
-  <div id="mobile-floating-cart" class="fixed bottom-5 left-4 right-4 z-40 md:hidden hidden">
-    <button onclick="toggleCartModal(true)" class="w-full bg-red-600 text-white py-3.5 px-6 rounded-2xl shadow-2xl flex items-center justify-between font-bold border-2 border-white">
-      <div class="flex items-center gap-2">
-        <span class="bg-white text-red-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-extrabold" id="mobile-cart-badge">0</span>
-        <span>View Order Cart</span>
+  <!-- ================= ITEM DETAILS & RELATED ITEMS MODAL ================= -->
+  <div id="item-details-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6 space-y-6">
+      <button onclick="closeItemModal()" class="absolute right-5 top-5 text-gray-400 hover:text-gray-700 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center z-10">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Selected Item Detail Box -->
+      <div id="selected-item-view">
+        <!-- Injected via JS -->
       </div>
-      <span>₹<span id="mobile-cart-total">0</span> <i class="fa-solid fa-arrow-right ml-1"></i></span>
-    </button>
+
+      <!-- RELATED ITEMS SECTION (Recommendation Engine) -->
+      <div class="border-t border-gray-100 pt-5 space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="text-red-600 text-lg">✨</span>
+          <h4 class="font-extrabold text-gray-900 text-base">You May Also Like (Related Items)</h4>
+        </div>
+        <p class="text-xs text-gray-500">Iski category aur popular combos ke dusre items:</p>
+        
+        <div id="related-items-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Cart Modal Drawer -->
@@ -185,7 +213,6 @@
         <!-- Cart Footer & Form -->
         <div class="p-5 border-t border-gray-100 bg-white shadow-lg space-y-4">
           
-          <!-- Bill Breakdown -->
           <div class="space-y-1.5 text-sm">
             <div class="flex justify-between text-gray-600">
               <span>Item Total</span>
@@ -203,7 +230,6 @@
 
           <!-- Checkout Form -->
           <form id="order-checkout-form" onsubmit="handlePlaceOrder(event)" class="space-y-3 pt-2">
-            
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Aapka Naam *</label>
               <input type="text" id="cust-name" required placeholder="Ex: Rahul Sharma" class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -244,13 +270,12 @@
               <input type="email" id="cust-email" placeholder="apna-email@gmail.com" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
             </div>
 
-            <!-- Submit Button -->
             <button type="submit" class="w-full py-3.5 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-200 transition flex items-center justify-center gap-2 group">
               <i class="fa-brands fa-whatsapp text-xl"></i>
               <span>Send Order on WhatsApp</span>
               <i class="fa-solid fa-chevron-right text-xs group-hover:translate-x-1 transition"></i>
             </button>
-            <p class="text-center text-[11px] text-gray-400">Order send hote hi direct WhatsApp chat open hogi</p>
+            <p class="text-center text-[11px] text-gray-400">Order send hote hi instant bill aur kitchen notification trigger hogi</p>
 
           </form>
 
@@ -273,10 +298,9 @@
       <p class="text-xs text-gray-500 mt-1">GPay, PhonePe, Paytm ya koi bhi UPI app se pay karein</p>
       
       <div class="my-4 p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center">
-        <!-- Dynamic QR via api.qrserver.com -->
-        <img id="upi-qr-image" src="" alt="UPI QR Code" class="w-48 h-48 rounded-xl shadow-sm">
+        <img id="upi-qr-image" src="" alt="UPI QR Code" class="w-48 h-48 rounded-xl shadow-sm object-contain">
         <p class="text-xs font-bold text-gray-800 mt-2">Amount to Pay: ₹<span id="upi-amount-display">0</span></p>
-        <p class="text-[11px] text-gray-500 font-mono mt-0.5">UPI ID: 7667610195@upi</p>
+        <p class="text-[11px] text-gray-500 font-mono mt-0.5" id="upi-id-display">UPI ID: 7667610195@upi</p>
       </div>
 
       <button onclick="proceedToWhatsAppAfterPayment()" class="w-full py-3 bg-green-600 text-white font-bold rounded-xl shadow hover:bg-green-700">
@@ -285,45 +309,98 @@
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- ================= INVOICE BILL MODAL (For Customer & Print) ================= -->
+  <div id="invoice-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto" id="printable-invoice">
+      <button onclick="closeInvoiceModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 print:hidden">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div id="invoice-content-placeholder">
+        <!-- Injected via JS -->
+      </div>
+
+      <div class="flex gap-2 pt-3 border-t border-gray-100 print:hidden">
+        <button onclick="window.print()" class="flex-1 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-slate-800">
+          <i class="fa-solid fa-print"></i> Print / Save Bill
+        </button>
+        <button onclick="closeInvoiceModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Mobile Cart -->
+  <div id="mobile-floating-cart" class="fixed bottom-5 left-4 right-4 z-40 md:hidden hidden">
+    <button onclick="toggleCartModal(true)" class="w-full bg-red-600 text-white py-3.5 px-6 rounded-2xl shadow-2xl flex items-center justify-between font-bold border-2 border-white">
+      <div class="flex items-center gap-2">
+        <span class="bg-white text-red-600 rounded-full w-6 h-6 flex items-center justify-center text-xs font-extrabold" id="mobile-cart-badge">0</span>
+        <span>View Order Cart</span>
+      </div>
+      <span>₹<span id="mobile-cart-total">0</span> <i class="fa-solid fa-arrow-right ml-1"></i></span>
+    </button>
+  </div>
+
+  <!-- Footer (Admin link completely removed from public UI) -->
   <footer class="bg-gray-900 text-white mt-20 border-t border-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         
-        <div>
+        <div class="md:col-span-1">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white text-xl">
               <i class="fa-solid fa-pizza-slice"></i>
             </div>
-            <h3 class="text-xl font-bold">Slice Pizza & Cafe</h3>
+            <h3 class="text-xl font-bold" id="footer-brand-title">Slice Pizza & Cafe</h3>
           </div>
-          <p class="text-gray-400 text-sm leading-relaxed">
+          <p class="text-gray-400 text-xs sm:text-sm leading-relaxed">
             Aapka pasandida pizza, burger aur cafe drinks outlet. Authentic fresh base aur premium ingredients se bana har ek bite me mazedar taste.
           </p>
+          <!-- Social Icons -->
+          <div class="flex items-center gap-3 mt-4">
+            <a id="footer-instagram-link" href="#" target="_blank" class="w-9 h-9 rounded-xl bg-gray-800 hover:bg-pink-600 text-white flex items-center justify-center transition">
+              <i class="fa-brands fa-instagram"></i>
+            </a>
+            <a id="footer-whatsapp-link" href="#" target="_blank" class="w-9 h-9 rounded-xl bg-gray-800 hover:bg-green-600 text-white flex items-center justify-center transition">
+              <i class="fa-brands fa-whatsapp"></i>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-base font-bold mb-4 text-amber-400 uppercase tracking-wider text-xs">Quick Links</h4>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li><a href="index.html" class="hover:text-white transition">Home</a></li>
+            <li><a href="#menu-section" class="hover:text-white transition">Full Menu</a></li>
+            <li><a href="track.html" class="hover:text-white transition text-amber-400">Track Live Order</a></li>
+            <li><a href="customers.html" class="hover:text-white transition">Our Customers & Reviews</a></li>
+            <li><a href="about.html" class="hover:text-white transition">About Slice Pizza</a></li>
+            <li><a href="policy.html" class="hover:text-white transition">Privacy & Store Policy</a></li>
+          </ul>
         </div>
 
         <div>
           <h4 class="text-base font-bold mb-4 text-amber-400 uppercase tracking-wider text-xs">Shop Details & Timing</h4>
           <ul class="space-y-2 text-sm text-gray-400">
-            <li><i class="fa-solid fa-clock text-red-500 mr-2"></i> Open Everyday: 11:00 AM – 11:00 PM</li>
-            <li><i class="fa-solid fa-phone text-red-500 mr-2"></i> Call / WhatsApp: +91 7667610195</li>
+            <li><i class="fa-solid fa-clock text-red-500 mr-2"></i> Open: 11:00 AM – 11:00 PM</li>
+            <li><i class="fa-solid fa-phone text-red-500 mr-2"></i> WhatsApp: <span id="footer-phone-display">+91 7667610195</span></li>
             <li><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Slice Pizza & Cafe Store</li>
           </ul>
         </div>
 
         <div>
-          <h4 class="text-base font-bold mb-4 text-amber-400 uppercase tracking-wider text-xs">Admin Access</h4>
-          <p class="text-gray-400 text-sm mb-3">Shop Owner yahan se menu item add, delete ya price change kar sakte hain:</p>
-          <a href="admin.html" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold rounded-xl border border-gray-700 transition">
-            <i class="fa-solid fa-lock text-amber-400"></i> Open Admin Panel
-          </a>
+          <h4 class="text-base font-bold mb-4 text-amber-400 uppercase tracking-wider text-xs">100% Quality Promise</h4>
+          <p class="text-gray-400 text-xs leading-relaxed">
+            Fresh handmade dough daily, authentic mozzarella cheese, zero platform fee and transparent billing on every order!
+          </p>
         </div>
 
       </div>
 
       <div class="border-t border-gray-800 mt-10 pt-6 text-center text-xs text-gray-500 flex flex-col sm:flex-row justify-between items-center gap-2">
         <p>© 2026 Slice Pizza & Cafe. All rights reserved.</p>
-        <p>Direct WhatsApp Ordering System (100% Free Hosting Ready)</p>
+        <p><a href="policy.html" class="underline hover:text-gray-300">Privacy Policy</a> | <a href="policy.html#refund" class="underline hover:text-gray-300">Refund Policy</a> | Direct WhatsApp Ordering</p>
       </div>
     </div>
   </footer>
@@ -334,6 +411,7 @@
     <span id="toast-msg">Item added to cart!</span>
   </div>
 
+  <script src="js/shared.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

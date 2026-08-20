@@ -3,11 +3,29 @@ body {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Hide scrollbar for category pills */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.hero-slide {
+  transition: opacity 0.8s ease-in-out;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-invoice, #printable-invoice * {
+    visibility: visible;
+  }
+  #printable-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
 }

@@ -1,50 +1,40 @@
-# 🍕 Slice Pizza & Cafe - Complete Free Website Package
+# 🍕 Slice Pizza & Cafe - Master V3 Upgrade Package
 
-Ye project **Slice Pizza & Cafe** ke liye ready kiya gaya complete frontend + admin panel + WhatsApp & UPI ordering solution hai.
+Is update me aapki sabhi specialized requirements add kar di gayi hain:
 
----
-
-## 📁 Files List:
-1. `index.html` - Customer storefront (Pizza, Burgers, Cafe drinks menu, Cart system, Dine-in/Takeaway/Delivery options, WhatsApp order integration).
-2. `admin.html` - Shop Owner Dashboard (Pin Protected, Add/Edit/Delete items, Out-of-Stock toggle, Price changer).
-3. `js/app.js` - Store logic & WhatsApp message generator with customer details.
-4. `js/admin.js` - Admin CRUD operations and localStorage backup system.
-5. `css/custom.css` - Custom styling and font rules.
-
----
-
-## 🚀 GitHub Pe Drag & Drop Karke Free Live Kaise Karein (1 Minute):
-
-### Step 1: GitHub Par Repository Banayein
-1. [github.com](https://github.com/) par jayein aur Login karein.
-2. **New Repository** par click karein.
-3. Repository ka naam dalein: `slice-pizza-cafe` aur ise **Public** select karein.
-4. **Create repository** button dabayein.
-
-### Step 2: Files Drag & Drop Karein
-1. GitHub page par **"uploading an existing file"** link par click karein.
-2. Is Zip folder ke andar ki sari files (`index.html`, `admin.html`, `js/`, `css/`, `README.md`) ko drag karke GitHub par drop kar dein.
-3. Niche **Commit changes** button par click karein.
-
-### Step 3: 100% Free Live Website Activate Karein (GitHub Pages)
-1. Repository me **Settings** tab par jayein.
-2. Left side menu me **Pages** par click karein.
-3. **Branch** me `main` select karein aur folder me `/ (root)` chunein, fir **Save** karein.
-4. 1 minute me aapki website live link ready ho jayegi:  
-   👉 `https://<your-username>.github.io/slice-pizza-cafe/`
+1. **Admin Panel Pe Live Orders & Audio Notification:**
+   * Customer jaise hi website par order karega, wo WhatsApp par jayega sath hi **Admin Panel ke 'Live Orders Queue' me instant reflect hoga**.
+   * Jab bhi koi naya order aayega, aapke system/laptop me **Kitchen Chime Notification Sound (Bell)** bajegi.
+2. **Order Status & Live Customer Tracking (`track.html`):**
+   * Admin panel se aap order status ko change kar sakte hain:  
+     `⏳ Received` ➔ `🔥 Preparing in Kitchen` ➔ `🛵 Out for Delivery / Ready` ➔ `✅ Delivered`.
+   * Customer `track.html` page par apna Mobile Number enter karke live stepper progress bar dekh sakta hai ki uska pizza kahan pahuncha hai.
+3. **Bill / Invoice Generator:**
+   * Order place hote hi ek clean formatted bill/invoice generate hota hai (Order ID, Customer Details, Items, Subtotal, Grand Total).
+   * Bill ko print/save karne ka option hai aur WhatsApp formatted receipt bhi ready hoti hai.
+4. **Public Site Se 'Admin' Link Hata Diya Gaya:**
+   * Frontend website (header, footer, nav) se "Admin" ka koi text ya button public users ko nahi dikhega.
+   * Aap direct `admin.html` link open karke apne Master control panel me secret login kar sakte hain.
+5. **Admin Panel Se UPI ID & Custom QR Control:**
+   * Admin panel se aap apni **UPI ID** aur chahein to apna **Custom QR Image URL** change kar sakte hain. Customer ko wahi QR payment ke waqt scan ke liye dikhega.
+6. **Social Links & Instagram Integration:**
+   * Admin panel se apna **Instagram profile link** add/change kar sakte hain jo website ke header aur footer par live show hoga.
+7. **Category Manager (Add / Delete):**
+   * Admin panel se naye categories add kar sakte hain (e.g. Pasta, Desserts, Shakes) ya purane categories ko remove kar sakte hain.
+8. **Related Items Recommender Engine:**
+   * Customer jab kisi item ko select/click karega, to usko modal popup me item details ke sath usse **Related Items & Combos** recommend honge (+ Add button ke sath).
 
 ---
 
-## ⚙️ Settings & Customization:
+## 🚀 GitHub Pe Drag & Drop Karke Live Kaise Karein:
 
-* **WhatsApp Order Receive Number:**  
-  Default set hai: `+91 7667610195` (Isko change karne ke liye `js/app.js` me line 2 par number change karein).
+1. Download kiye gaye ZIP file ko extract karein.
+2. [github.com](https://github.com/) par apni `slice-pizza-cafe` repository kholein.
+3. Sari files (`index.html`, `track.html`, `about.html`, `policy.html`, `customers.html`, `admin.html`, `js/`, `css/`, `README.md`) ko drag karke GitHub par drop karein aur **Commit Changes** dabayein.
+4. 1 minute me aapki updated website live ho jayegi!
 
-* **Admin Panel Security PIN:**  
-  Default PIN: `1234` (Aap `admin.html` khol kar dashboard access kar sakte hain).
+---
 
-* **Online UPI Payment Scanner:**  
-  Website me customer UPI QR se scan karke direct payment kar sakta hai.
-
-* **Custom Domain Connect Karna (Later):**  
-  GitHub Pages settings ya Vercel settings me jakar aap apna `.com` ya `.in` domain 1 click me attach kar sakte hain.
+## 🔐 Master Admin Credentials:
+* **Secret Admin URL:** `https://<your-username>.github.io/<repo-name>/admin.html`
+* **Default Password:** `admin1234`

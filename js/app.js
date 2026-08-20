@@ -1,120 +1,134 @@
-// Slice Pizza & Cafe - Frontend & WhatsApp Ordering Logic
-const WHATSAPP_NUMBER = "917667610195"; // Shop WhatsApp Number
-const SHOP_NAME = "Slice Pizza & Cafe";
-
-// Default Initial Menu
-const DEFAULT_MENU = [
-  {
-    id: "1",
-    name: "Classic Margherita Pizza",
-    category: "Veg Pizza",
-    price: 149,
-    image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&auto=format&fit=crop&q=80",
-    desc: "Fresh basil, 100% mozzarella cheese & rich herb tomato sauce.",
-    inStock: true
-  },
-  {
-    id: "2",
-    name: "Farmhouse Deluxe Pizza",
-    category: "Veg Pizza",
-    price: 269,
-    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80",
-    desc: "Crisp capsicum, sweet corn, mushroom, onion & extra cheese.",
-    inStock: true
-  },
-  {
-    id: "3",
-    name: "Paneer Makhani Cheese Burst",
-    category: "Veg Pizza",
-    price: 299,
-    image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=600&auto=format&fit=crop&q=80",
-    desc: "Tandoori paneer cubes, spicy makhani gravy base & melted cheese.",
-    inStock: true
-  },
-  {
-    id: "4",
-    name: "Spicy Peri-Peri Chicken Pizza",
-    category: "Non-Veg Pizza",
-    price: 319,
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop&q=80",
-    desc: "Smoked chicken chunks, peri peri sauce, red paprika & jalapenos.",
-    inStock: true
-  },
-  {
-    id: "5",
-    name: "Crispy Veg Maharaja Burger",
-    category: "Burgers",
-    price: 119,
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80",
-    desc: "Double patty, melted cheese slice, lettuce, tomato & cafe mayo.",
-    inStock: true
-  },
-  {
-    id: "6",
-    name: "Cold Coffee with Ice Cream",
-    category: "Cafe & Shakes",
-    price: 120,
-    image: "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=600&auto=format&fit=crop&q=80",
-    desc: "Thick brewed espresso blended with vanilla ice cream and chocolate drizzle.",
-    inStock: true
-  },
-  {
-    id: "7",
-    name: "Chocolate Oreo Shake",
-    category: "Cafe & Shakes",
-    price: 130,
-    image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80",
-    desc: "Loaded with crushed Oreo cookies, chocolate syrup & whipped cream.",
-    inStock: true
-  },
-  {
-    id: "8",
-    name: "Cheesy Garlic Breadsticks",
-    category: "Snacks & Sides",
-    price: 139,
-    image: "https://images.unsplash.com/photo-1619895092538-128341789043?w=600&auto=format&fit=crop&q=80",
-    desc: "Freshly baked bread with garlic butter, stuffed cheese & oregano herbs.",
-    inStock: true
-  }
-];
-
-// State
-let menuData = [];
+// Slice Pizza & Cafe - Frontend & WhatsApp Ordering Logic (V3)
+let siteConfig = {};
 let cart = [];
 let activeCategory = "All";
 let searchQuery = "";
+let currentSlideIndex = 0;
+let slideInterval = null;
 let pendingWhatsAppMessage = "";
+let lastGeneratedOrderId = "";
 
-// Initialize
 document.addEventListener("DOMContentLoaded", () => {
-  loadMenuData();
+  siteConfig = getSiteConfig();
+  renderAnnouncement();
+  applySocialAndBrandLinks();
+  initHeroSlider();
   renderCategories();
   renderMenu();
   loadCartFromStorage();
   updateCartUI();
 });
 
-// Load Menu from localStorage or Default
-function loadMenuData() {
-  const saved = localStorage.getItem("slice_pizza_menu");
-  if (saved) {
-    try {
-      menuData = JSON.parse(saved);
-    } catch (e) {
-      menuData = DEFAULT_MENU;
-    }
-  } else {
-    menuData = DEFAULT_MENU;
-    localStorage.setItem("slice_pizza_menu", JSON.stringify(DEFAULT_MENU));
+function renderAnnouncement() {
+  const bar = document.getElementById("announcement-bar");
+  const topPhone = document.getElementById("top-phone-display");
+  if (bar && siteConfig.announcement) {
+    bar.querySelector("span:first-child").innerText = siteConfig.announcement;
+  }
+  if (topPhone) {
+    topPhone.innerHTML = `<i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +${siteConfig.phone || '917667610195'}`;
   }
 }
 
-// Render Categories
+function applySocialAndBrandLinks() {
+  const navInsta = document.getElementById("nav-instagram-link");
+  const footerInsta = document.getElementById("footer-instagram-link");
+  const footerWa = document.getElementById("footer-whatsapp-link");
+  const footerPhone = document.getElementById("footer-phone-display");
+
+  if (navInsta) navInsta.href = siteConfig.instagramUrl || "https://instagram.com/";
+  if (footerInsta) footerInsta.href = siteConfig.instagramUrl || "https://instagram.com/";
+  if (footerWa) footerWa.href = `https://wa.me/${siteConfig.phone || '917667610195'}`;
+  if (footerPhone) footerPhone.innerText = `+${siteConfig.phone || '917667610195'}`;
+}
+
+// ---------------- HERO AUTO SLIDER ----------------
+function initHeroSlider() {
+  const track = document.getElementById("hero-slider-track");
+  const dotsContainer = document.getElementById("slider-dots");
+  if (!track || !siteConfig.banners || siteConfig.banners.length === 0) return;
+
+  track.innerHTML = siteConfig.banners.map((b, idx) => `
+    <div class="hero-slide absolute inset-0 transition-opacity duration-1000 flex items-center ${idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${idx}">
+      <img src="${b.image}" class="absolute inset-0 w-full h-full object-cover brightness-50" alt="${b.title}">
+      <div class="relative z-10 max-w-2xl px-6 sm:px-12 md:px-16 text-white space-y-4">
+        <span class="inline-block px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black tracking-wider uppercase">${b.badge || 'Featured'}</span>
+        <h2 class="text-2xl sm:text-4xl md:text-5xl font-black leading-tight drop-shadow-md">${b.title}</h2>
+        <p class="text-xs sm:text-base text-gray-200 line-clamp-2 max-w-lg">${b.subtitle || ''}</p>
+        <div class="pt-2">
+          <a href="#menu-section" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-amber-500 hover:scale-105 transition rounded-full font-bold text-xs sm:text-sm text-white shadow-xl">
+            <i class="fa-solid fa-utensils"></i> Order This Now
+          </a>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  if (dotsContainer) {
+    dotsContainer.innerHTML = siteConfig.banners.map((_, idx) => `
+      <button onclick="goToSlide(${idx})" class="slider-dot w-2.5 h-2.5 rounded-full transition-all ${idx === 0 ? 'bg-amber-400 w-8' : 'bg-white/50'}"></button>
+    `).join("");
+  }
+
+  startAutoSlide();
+}
+
+function startAutoSlide() {
+  if (slideInterval) clearInterval(slideInterval);
+  slideInterval = setInterval(() => {
+    nextSlide();
+  }, 4500);
+}
+
+function showSlide(index) {
+  const slides = document.querySelectorAll(".hero-slide");
+  const dots = document.querySelectorAll(".slider-dot");
+  if (slides.length === 0) return;
+
+  if (index >= slides.length) index = 0;
+  if (index < 0) index = slides.length - 1;
+  currentSlideIndex = index;
+
+  slides.forEach((s, idx) => {
+    if (idx === currentSlideIndex) {
+      s.classList.remove("opacity-0", "z-0");
+      s.classList.add("opacity-100", "z-10");
+    } else {
+      s.classList.remove("opacity-100", "z-10");
+      s.classList.add("opacity-0", "z-0");
+    }
+  });
+
+  dots.forEach((d, idx) => {
+    if (idx === currentSlideIndex) {
+      d.className = "slider-dot w-8 h-2.5 rounded-full bg-amber-400 transition-all";
+    } else {
+      d.className = "slider-dot w-2.5 h-2.5 rounded-full bg-white/50 transition-all";
+    }
+  });
+}
+
+function nextSlide() {
+  showSlide(currentSlideIndex + 1);
+  startAutoSlide();
+}
+
+function prevSlide() {
+  showSlide(currentSlideIndex - 1);
+  startAutoSlide();
+}
+
+function goToSlide(idx) {
+  showSlide(idx);
+  startAutoSlide();
+}
+
+// ---------------- MENU & CATEGORIES ----------------
 function renderCategories() {
   const container = document.getElementById("category-pills");
   if (!container) return;
 
-  const categories = ["All", ...new Set(menuData.map(item => item.category))];
+  const categories = ["All", ...(siteConfig.categories || ["Veg Pizza", "Non-Veg Pizza", "Burgers", "Cafe & Shakes", "Snacks & Sides"])];
   
   container.innerHTML = categories.map(cat => {
     const isActive = cat === activeCategory;
@@ -138,14 +152,13 @@ function handleSearch(val) {
   renderMenu();
 }
 
-// Render Menu Cards
 function renderMenu() {
   const grid = document.getElementById("menu-grid");
   const emptyState = document.getElementById("empty-state");
   const countDisplay = document.getElementById("items-count-display");
   if (!grid) return;
 
-  let filtered = menuData.filter(item => {
+  let filtered = siteConfig.menu.filter(item => {
     const matchCat = activeCategory === "All" || item.category === activeCategory;
     const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery) || (item.desc && item.desc.toLowerCase().includes(searchQuery));
     return matchCat && matchSearch;
@@ -170,8 +183,8 @@ function renderMenu() {
     return `
       <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group ${isOut ? 'opacity-60 grayscale' : ''}">
         
-        <!-- Image & Badges -->
-        <div class="relative overflow-hidden h-48 bg-gray-100">
+        <!-- Image Click opens Detail Modal + Related Items -->
+        <div onclick="openItemDetails('${item.id}')" class="relative overflow-hidden h-48 bg-gray-100 cursor-pointer">
           <img src="${item.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600'}" 
                alt="${item.name}" 
                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
@@ -182,17 +195,19 @@ function renderMenu() {
             </span>
           </div>
 
+          <div class="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg text-[10px] font-bold">
+            <i class="fa-solid fa-eye mr-1"></i> View Details
+          </div>
+
           ${isOut ? `<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-extrabold text-xs tracking-wider uppercase">Sold Out</div>` : ''}
         </div>
 
-        <!-- Info -->
         <div class="p-5 flex-1 flex flex-col justify-between">
-          <div>
+          <div onclick="openItemDetails('${item.id}')" class="cursor-pointer">
             <h3 class="font-bold text-gray-900 text-base group-hover:text-red-600 transition-colors">${item.name}</h3>
             <p class="text-gray-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">${item.desc || 'Freshly prepared on order with authentic recipe.'}</p>
           </div>
 
-          <!-- Price & Action Button -->
           <div class="pt-4 mt-2 border-t border-gray-50 flex items-center justify-between">
             <div>
               <span class="text-xs text-gray-400 font-semibold block">Price</span>
@@ -225,9 +240,56 @@ function renderMenu() {
   }).join("");
 }
 
-// Cart Operations
+// ---------------- ITEM DETAIL MODAL + RELATED ITEMS RECOMMENDER ----------------
+function openItemDetails(id) {
+  const item = siteConfig.menu.find(i => i.id === id);
+  if (!item) return;
+
+  const viewContainer = document.getElementById("selected-item-view");
+  const relatedGrid = document.getElementById("related-items-grid");
+  const modal = document.getElementById("item-details-modal");
+
+  viewContainer.innerHTML = `
+    <div class="grid sm:grid-cols-2 gap-6 items-center">
+      <img src="${item.image}" class="w-full h-56 object-cover rounded-2xl shadow-md" alt="${item.name}">
+      <div class="space-y-3">
+        <span class="px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full">${item.category}</span>
+        <h3 class="text-2xl font-black text-gray-900">${item.name}</h3>
+        <p class="text-sm text-gray-600">${item.desc || 'Prepared freshly with 100% genuine ingredients and fresh handmade dough.'}</p>
+        <div class="text-2xl font-black text-red-600 pt-1">₹${item.price}</div>
+        <button onclick="addToCart('${item.id}'); closeItemModal();" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">
+          🛒 Add to Cart Now
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Find related items (Same category or popular sides)
+  const related = siteConfig.menu.filter(i => i.id !== id && (i.category === item.category || i.category === "Snacks & Sides" || i.category === "Cafe & Shakes")).slice(0, 4);
+
+  relatedGrid.innerHTML = related.map(rel => `
+    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+      <img src="${rel.image}" class="w-14 h-14 object-cover rounded-xl" alt="${rel.name}">
+      <div class="flex-1">
+        <h5 class="text-xs font-bold text-gray-900 leading-tight">${rel.name}</h5>
+        <p class="text-xs text-red-600 font-extrabold">₹${rel.price}</p>
+      </div>
+      <button onclick="addToCart('${rel.id}')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700">
+        + Add
+      </button>
+    </div>
+  `).join("");
+
+  modal.classList.remove("hidden");
+}
+
+function closeItemModal() {
+  document.getElementById("item-details-modal").classList.add("hidden");
+}
+
+// ---------------- CART SYSTEM ----------------
 function addToCart(id) {
-  const item = menuData.find(i => i.id === id);
+  const item = siteConfig.menu.find(i => i.id === id);
   if (!item || item.inStock === false) return;
 
   const existing = cart.find(c => c.id === id);
@@ -272,7 +334,6 @@ function updateCartUI() {
   const totalCount = cart.reduce((sum, i) => sum + i.qty, 0);
   const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
 
-  // Badge Updates
   const navBadge = document.getElementById("nav-cart-badge");
   const mobileBadge = document.getElementById("mobile-cart-badge");
   const mobileTotal = document.getElementById("mobile-cart-total");
@@ -287,7 +348,6 @@ function updateCartUI() {
     else mobileFloating.classList.add("hidden");
   }
 
-  // Cart Drawer Content
   const container = document.getElementById("cart-items-container");
   const subtotalEl = document.getElementById("cart-subtotal");
   const totalEl = document.getElementById("cart-total-amount");
@@ -328,7 +388,6 @@ function updateCartUI() {
   }
 }
 
-// Cart Drawer Open/Close
 function toggleCartModal(show) {
   const modal = document.getElementById("cart-modal");
   if (!modal) return;
@@ -351,7 +410,7 @@ function handleOrderTypeChange(val) {
   }
 }
 
-// Place Order & WhatsApp Redirect
+// ---------------- PLACE ORDER, RECORD TO ADMIN QUEUE & DISPATCH ----------------
 function handlePlaceOrder(e) {
   e.preventDefault();
   if (cart.length === 0) {
@@ -367,51 +426,62 @@ function handlePlaceOrder(e) {
   const email = document.getElementById("cust-email").value.trim();
   const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
 
-  // Construct Beautiful WhatsApp Message
-  let msg = `🍕 *NEW ORDER - ${SHOP_NAME.toUpperCase()}* 🍕
-`;
-  msg += `━━━━━━━━━━━━━━━━━━━━━
-`;
-  msg += `👤 *Customer:* ${name}
-`;
-  msg += `📞 *Phone:* ${phone}
-`;
-  msg += `🛵 *Type:* ${orderType}
-`;
-  msg += `📍 *Address/Table:* ${address}
-`;
-  msg += `💳 *Payment:* ${paymentMethod}
-`;
-  if (email) msg += `✉️ *Email:* ${email}
-`;
-  msg += `━━━━━━━━━━━━━━━━━━━━━
-`;
+  const orderId = "ORD" + Math.floor(100000 + Math.random() * 900000);
+  lastGeneratedOrderId = orderId;
+
+  // Save to Master Orders List (For Admin and Track page)
+  const newOrder = {
+    id: orderId,
+    name,
+    phone,
+    orderType,
+    paymentMethod,
+    address,
+    email,
+    total,
+    status: "Received", // Status flow: Received -> Preparing -> Out for Delivery -> Delivered
+    date: new Date().toLocaleString(),
+    cart: [...cart],
+    itemsSummary: cart.map(i => `${i.name} (${i.qty})`).join(", ")
+  };
+
+  const existingOrders = getAllOrders();
+  existingOrders.unshift(newOrder);
+  saveOrdersList(existingOrders);
+
+  // Store phone for auto track
+  localStorage.setItem("slice_last_order_phone", phone);
+
+  // WhatsApp Message
+  let msg = `🍕 *NEW ORDER #${orderId} - ${siteConfig.shopName.toUpperCase()}* 🍕\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `🆔 *Order ID:* #${orderId}\n`;
+  msg += `👤 *Customer:* ${name}\n`;
+  msg += `📞 *Phone:* ${phone}\n`;
+  msg += `🛵 *Type:* ${orderType}\n`;
+  msg += `📍 *Address/Table:* ${address}\n`;
+  msg += `💳 *Payment:* ${paymentMethod}\n`;
+  if (email) msg += `✉️ *Email:* ${email}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `📋 *ORDER ITEMS:*
 `;
 
   cart.forEach((item, idx) => {
-    msg += `${idx + 1}. ${item.name}
-   ↳ ${item.qty} × ₹${item.price} = *₹${item.price * item.qty}*
-`;
+    msg += `${idx + 1}. ${item.name}\n   ↳ ${item.qty} × ₹${item.price} = *₹${item.price * item.qty}*\n`;
   });
 
-  msg += `━━━━━━━━━━━━━━━━━━━━━
-`;
-  msg += `💰 *TOTAL AMOUNT: ₹${total}*
-`;
-  msg += `━━━━━━━━━━━━━━━━━━━━━
-`;
-  msg += `⏱️ Time: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `💰 *TOTAL AMOUNT: ₹${total}*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📍 Live Tracking Link: https://wa.me/${siteConfig.phone || '917667610195'}\n`;
   msg += `_Order placed directly via website._`;
 
   pendingWhatsAppMessage = msg;
 
-  // If Online UPI is selected, show QR Modal first
   if (paymentMethod === "UPI / QR Code Scan") {
     openUpiModal(total);
   } else {
-    sendWhatsAppNow(msg);
+    completeOrderProcess(msg, newOrder);
   }
 }
 
@@ -419,11 +489,19 @@ function openUpiModal(amount) {
   const modal = document.getElementById("upi-modal");
   const amountDisplay = document.getElementById("upi-amount-display");
   const qrImg = document.getElementById("upi-qr-image");
+  const upiIdDisplay = document.getElementById("upi-id-display");
   
+  const upiId = siteConfig.upiId || "7667610195@upi";
   amountDisplay.innerText = amount;
-  // Generate UPI QR (BHIM/GPay/PhonePe format)
-  const upiString = `upi://pay?pa=7667610195@upi&pn=SlicePizzaCafe&am=${amount}&cu=INR`;
-  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+  if (upiIdDisplay) upiIdDisplay.innerText = `UPI ID: ${upiId}`;
+
+  // If custom QR is provided in admin settings, use it, else generate dynamically
+  if (siteConfig.customQrUrl && siteConfig.customQrUrl.trim() !== "") {
+    qrImg.src = siteConfig.customQrUrl;
+  } else {
+    const upiString = `upi://pay?pa=${upiId}&pn=SlicePizzaCafe&am=${amount}&cu=INR`;
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+  }
   
   modal.classList.remove("hidden");
 }
@@ -434,24 +512,77 @@ function closeUpiModal() {
 
 function proceedToWhatsAppAfterPayment() {
   closeUpiModal();
-  sendWhatsAppNow(pendingWhatsAppMessage + `
-✅ *Payment Status:* Paid Online via UPI QR`);
+  const existingOrders = getAllOrders();
+  const found = existingOrders.find(o => o.id === lastGeneratedOrderId);
+  completeOrderProcess(pendingWhatsAppMessage + `\n✅ *Payment Status:* Paid Online via UPI QR`, found);
 }
 
-function sendWhatsAppNow(message) {
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+function completeOrderProcess(message, orderObj) {
+  const targetPhone = siteConfig.phone || "917667610195";
+  const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
 
-  // Reset Cart
+  // Show Invoice Bill to customer
+  if (orderObj) {
+    showInvoiceModal(orderObj);
+  }
+
   cart = [];
   saveCart();
   updateCartUI();
   renderMenu();
   toggleCartModal(false);
-  showToast("Order WhatsApp par send ho gaya! 🚀");
+  showToast("Order Placed Successfully! Kitchen notified 🚀");
 }
 
-// Toast
+function showInvoiceModal(order) {
+  const modal = document.getElementById("invoice-modal");
+  const placeholder = document.getElementById("invoice-content-placeholder");
+  if (!modal || !placeholder) return;
+
+  placeholder.innerHTML = `
+    <div class="text-center pb-3 border-b border-dashed border-gray-300">
+      <h3 class="text-2xl font-black text-gray-900">🍕 ${siteConfig.shopName}</h3>
+      <p class="text-xs text-gray-500">Official Kitchen Order Invoice</p>
+      <span class="inline-block mt-2 px-3 py-1 bg-red-100 text-red-700 text-xs font-black rounded-full">Order ID: #${order.id}</span>
+    </div>
+
+    <div class="text-xs space-y-1 py-2 border-b border-dashed border-gray-300 text-gray-700">
+      <div class="flex justify-between"><span>Customer:</span> <strong>${order.name}</strong></div>
+      <div class="flex justify-between"><span>Phone:</span> <strong>${order.phone}</strong></div>
+      <div class="flex justify-between"><span>Type:</span> <strong>${order.orderType}</strong></div>
+      <div class="flex justify-between"><span>Address:</span> <span>${order.address}</span></div>
+      <div class="flex justify-between"><span>Payment:</span> <strong>${order.paymentMethod}</strong></div>
+      <div class="flex justify-between"><span>Date:</span> <span>${order.date}</span></div>
+    </div>
+
+    <div class="space-y-2 py-2 text-xs">
+      <p class="font-bold text-gray-800">ITEMS ORDERED:</p>
+      ${order.cart.map(item => `
+        <div class="flex justify-between text-gray-700">
+          <span>${item.name} x ${item.qty}</span>
+          <span class="font-bold">₹${item.price * item.qty}</span>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="pt-2 border-t-2 border-dashed border-gray-300 flex justify-between items-center text-base font-black text-gray-900">
+      <span>GRAND TOTAL</span>
+      <span class="text-red-600 text-lg">₹${order.total}</span>
+    </div>
+
+    <div class="text-center pt-2 text-[11px] text-gray-400">
+      Aap is order ka live status <a href="track.html" class="text-red-600 underline font-bold">Track Order</a> page par dekh sakte hain.
+    </div>
+  `;
+
+  modal.classList.remove("hidden");
+}
+
+function closeInvoiceModal() {
+  document.getElementById("invoice-modal").classList.add("hidden");
+}
+
 function showToast(msg) {
   const toast = document.getElementById("toast");
   const toastMsg = document.getElementById("toast-msg");
