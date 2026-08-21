@@ -1,4 +1,3 @@
-// Slice Pizza & Cafe - Customer Storefront Logic (V4)
 let siteConfig = {};
 let cart = [];
 let activeCategory = "All";
@@ -19,9 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
   loadCartFromStorage();
   updateCartUI();
 
-  // Listen for admin config updates in realtime
   try {
-    const bc = new BroadcastChannel("slice_sync_channel");
+    const bc = new BroadcastChannel("slice_sync_channel_v5");
     bc.onmessage = (ev) => {
       if (ev.data && ev.data.type === "CONFIG_UPDATED") {
         siteConfig = getSiteConfig();
@@ -38,8 +36,8 @@ function renderAnnouncement() {
   const bar = document.getElementById("announcement-bar");
   const topPhone = document.getElementById("top-phone-display");
   if (bar && siteConfig.announcement) {
-    const txt = bar.querySelector("span:first-child");
-    if (txt) txt.innerText = siteConfig.announcement;
+    const spanEl = bar.querySelector("span:first-child");
+    if (spanEl) spanEl.innerText = siteConfig.announcement;
   }
   if (topPhone) {
     topPhone.innerHTML = `<i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +${siteConfig.phone || '917667610195'}`;
@@ -60,7 +58,6 @@ function applySocialAndBrandLinks() {
   if (footerPhone) footerPhone.innerText = `+${cleanPhone}`;
 }
 
-// ---------------- HERO AUTO SLIDER ----------------
 function initHeroSlider() {
   const track = document.getElementById("hero-slider-track");
   const dotsContainer = document.getElementById("slider-dots");
@@ -68,15 +65,17 @@ function initHeroSlider() {
 
   track.innerHTML = siteConfig.banners.map((b, idx) => `
     <div class="hero-slide absolute inset-0 transition-opacity duration-1000 flex items-center ${idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${idx}">
-      <img src="${b.image}" class="absolute inset-0 w-full h-full object-cover brightness-50" alt="${b.title}">
+      <img src="${b.image}" 
+           onerror="this.src='https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200'"
+           class="absolute inset-0 w-full h-full object-cover brightness-[0.45]" alt="${b.title}">
       <div class="relative z-10 max-w-2xl px-6 sm:px-12 md:px-16 text-white space-y-4">
         <span class="inline-block px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black tracking-wider uppercase">${b.badge || 'Featured'}</span>
         <h2 class="text-2xl sm:text-4xl md:text-5xl font-black leading-tight drop-shadow-md">${b.title}</h2>
         <p class="text-xs sm:text-base text-gray-200 line-clamp-2 max-w-lg">${b.subtitle || ''}</p>
         <div class="pt-2">
-          <a href="#menu-section" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-amber-500 hover:scale-105 transition rounded-full font-bold text-xs sm:text-sm text-white shadow-xl">
-            <i class="fa-solid fa-utensils"></i> Order This Now
-          </a>
+          <button onclick="handleSlideOrderClick('${b.targetItemId || '1'}')" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-amber-500 hover:scale-105 transition rounded-full font-bold text-xs sm:text-sm text-white shadow-xl">
+            <i class="fa-solid fa-utensils"></i> Order This Item
+          </button>
         </div>
       </div>
     </div>
@@ -89,6 +88,14 @@ function initHeroSlider() {
   }
 
   startAutoSlide();
+}
+
+function handleSlideOrderClick(itemId) {
+  const menuEl = document.getElementById("menu-section");
+  if (menuEl) menuEl.scrollIntoView({ behavior: "smooth" });
+  setTimeout(() => {
+    openItemCustomization(itemId);
+  }, 400);
 }
 
 function startAutoSlide() {
@@ -126,22 +133,10 @@ function showSlide(index) {
   });
 }
 
-function nextSlide() {
-  showSlide(currentSlideIndex + 1);
-  startAutoSlide();
-}
+function nextSlide() { showSlide(currentSlideIndex + 1); startAutoSlide(); }
+function prevSlide() { showSlide(currentSlideIndex - 1); startAutoSlide(); }
+function goToSlide(idx) { showSlide(idx); startAutoSlide(); }
 
-function prevSlide() {
-  showSlide(currentSlideIndex - 1);
-  startAutoSlide();
-}
-
-function goToSlide(idx) {
-  showSlide(idx);
-  startAutoSlide();
-}
-
-// ---------------- MENU & CATEGORIES ----------------
 function renderCategories() {
   const container = document.getElementById("category-pills");
   if (!container) return;
@@ -194,94 +189,137 @@ function renderMenu() {
 
   emptyState.classList.add("hidden");
   grid.innerHTML = filtered.map(item => {
-    const cartItem = cart.find(c => c.id === item.id);
-    const qty = cartItem ? cartItem.qty : 0;
     const isOut = item.inStock === false;
 
     return `
       <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group ${isOut ? 'opacity-60 grayscale' : ''}">
-        
-        <div onclick="openItemDetails('${item.id}')" class="relative overflow-hidden h-48 bg-gray-100 cursor-pointer">
+        <div onclick="openItemCustomization('${item.id}')" class="relative overflow-hidden h-48 bg-gray-100 cursor-pointer">
           <img src="${item.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600'}" 
                alt="${item.name}" 
                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-          
           <div class="absolute top-3 left-3 flex flex-wrap gap-1">
             <span class="px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[10px] font-extrabold text-gray-800 uppercase tracking-wider shadow-sm">
               ${item.category}
             </span>
           </div>
-
-          <div class="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg text-[10px] font-bold">
-            <i class="fa-solid fa-eye mr-1"></i> View Details
+          <div class="absolute bottom-2 right-2 px-2.5 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg text-[10px] font-bold flex items-center gap-1">
+            <i class="fa-solid fa-sliders"></i> Customize
           </div>
-
           ${isOut ? `<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-extrabold text-xs tracking-wider uppercase">Sold Out</div>` : ''}
         </div>
 
         <div class="p-5 flex-1 flex flex-col justify-between">
-          <div onclick="openItemDetails('${item.id}')" class="cursor-pointer">
+          <div onclick="openItemCustomization('${item.id}')" class="cursor-pointer">
             <h3 class="font-bold text-gray-900 text-base group-hover:text-red-600 transition-colors">${item.name}</h3>
             <p class="text-gray-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">${item.desc || 'Freshly prepared on order with authentic recipe.'}</p>
           </div>
 
           <div class="pt-4 mt-2 border-t border-gray-50 flex items-center justify-between">
             <div>
-              <span class="text-xs text-gray-400 font-semibold block">Price</span>
+              <span class="text-xs text-gray-400 font-semibold block">Starts from</span>
               <span class="text-xl font-black text-gray-950">₹${item.price}</span>
             </div>
-
             ${isOut ? `
               <span class="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl">Out of Stock</span>
-            ` : qty > 0 ? `
-              <div class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full p-1">
-                <button onclick="updateItemQty('${item.id}', -1)" class="w-7 h-7 rounded-full bg-white text-red-600 font-black shadow-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition">
-                  <i class="fa-solid fa-minus text-xs"></i>
-                </button>
-                <span class="font-bold text-sm text-red-700 px-1">${qty}</span>
-                <button onclick="updateItemQty('${item.id}', 1)" class="w-7 h-7 rounded-full bg-red-600 text-white font-black shadow-sm flex items-center justify-center hover:bg-red-700 transition">
-                  <i class="fa-solid fa-plus text-xs"></i>
-                </button>
-              </div>
             ` : `
-              <button onclick="addToCart('${item.id}')" class="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-600 text-red-600 hover:text-white font-bold text-xs transition flex items-center gap-1.5">
-                <i class="fa-solid fa-plus text-[10px]"></i> Add
+              <button onclick="openItemCustomization('${item.id}')" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-md shadow-red-200">
+                <i class="fa-solid fa-plus text-[10px]"></i> Select
               </button>
             `}
           </div>
-
         </div>
-
       </div>
     `;
   }).join("");
 }
 
-// ---------------- ITEM DETAIL MODAL + RELATED ITEMS ----------------
-function openItemDetails(id) {
+let currentModalItem = null;
+let selectedSize = "regular";
+let selectedAddons = [];
+
+function openItemCustomization(id) {
   const item = siteConfig.menu.find(i => i.id === id);
-  if (!item) return;
+  if (!item || item.inStock === false) return;
+
+  currentModalItem = item;
+  selectedSize = "regular";
+  selectedAddons = [];
 
   const viewContainer = document.getElementById("selected-item-view");
   const relatedGrid = document.getElementById("related-items-grid");
   const modal = document.getElementById("item-details-modal");
 
+  const prices = item.prices || { regular: item.price, medium: item.price + 100, large: item.price + 200 };
+  const isPizza = item.category.toLowerCase().includes("pizza") || item.hasSizes;
+
   viewContainer.innerHTML = `
-    <div class="grid sm:grid-cols-2 gap-6 items-center">
-      <img src="${item.image}" class="w-full h-56 object-cover rounded-2xl shadow-md" alt="${item.name}">
-      <div class="space-y-3">
-        <span class="px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full">${item.category}</span>
-        <h3 class="text-2xl font-black text-gray-900">${item.name}</h3>
-        <p class="text-sm text-gray-600">${item.desc || 'Prepared freshly with 100% genuine ingredients and fresh handmade dough.'}</p>
-        <div class="text-2xl font-black text-red-600 pt-1">₹${item.price}</div>
-        <button onclick="addToCart('${item.id}'); closeItemModal();" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">
-          🛒 Add to Cart Now
-        </button>
+    <div class="grid sm:grid-cols-2 gap-6 items-start">
+      <div>
+        <img src="${item.image}" class="w-full h-56 object-cover rounded-2xl shadow-md border" alt="${item.name}">
+        <span class="inline-block mt-3 px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full">${item.category}</span>
+        <h3 class="text-2xl font-black text-gray-900 mt-1">${item.name}</h3>
+        <p class="text-xs text-gray-600 mt-1">${item.desc || 'Fresh handmade dough & 100% pure dairy mozzarella cheese.'}</p>
+      </div>
+
+      <div class="space-y-4">
+        ${isPizza ? `
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">1. Choose Size:</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" onclick="chooseSize('regular', ${prices.regular})" id="size-btn-regular" class="size-btn p-2.5 rounded-xl border-2 border-red-600 bg-red-50 text-center text-xs font-bold text-gray-900">
+                Regular<br><span class="text-red-600 font-extrabold">₹${prices.regular}</span>
+              </button>
+              <button type="button" onclick="chooseSize('medium', ${prices.medium})" id="size-btn-medium" class="size-btn p-2.5 rounded-xl border border-gray-200 text-center text-xs font-bold text-gray-700">
+                Medium<br><span class="text-gray-900 font-extrabold">₹${prices.medium}</span>
+              </button>
+              <button type="button" onclick="chooseSize('large', ${prices.large})" id="size-btn-large" class="size-btn p-2.5 rounded-xl border border-gray-200 text-center text-xs font-bold text-gray-700">
+                Large<br><span class="text-gray-900 font-extrabold">₹${prices.large}</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">2. Extra Crust & Toppings:</label>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" onchange="toggleAddon('Cheese Burst Crust', 50, this.checked)" class="rounded text-red-600">
+                  <span class="font-bold text-gray-800">Cheese Burst Crust</span>
+                </div>
+                <span class="font-extrabold text-red-600">+₹50</span>
+              </label>
+              <label class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" onchange="toggleAddon('Extra Mozzarella Cheese', 30, this.checked)" class="rounded text-red-600">
+                  <span class="font-bold text-gray-800">Extra Mozzarella Cheese</span>
+                </div>
+                <span class="font-extrabold text-red-600">+₹30</span>
+              </label>
+              <label class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border cursor-pointer">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" onchange="toggleAddon('Spicy Jalapeno & Olives', 25, this.checked)" class="rounded text-red-600">
+                  <span class="font-bold text-gray-800">Spicy Jalapeno & Olives</span>
+                </div>
+                <span class="font-extrabold text-red-600">+₹25</span>
+              </label>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="pt-2 border-t flex items-center justify-between">
+          <div>
+            <span class="text-xs text-gray-400 font-semibold block">Total Price</span>
+            <span class="text-2xl font-black text-red-600" id="modal-calculated-price">₹${prices.regular || item.price}</span>
+          </div>
+          <button onclick="confirmAddToCart()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2">
+            <i class="fa-solid fa-cart-plus"></i> Add to Cart
+          </button>
+        </div>
       </div>
     </div>
   `;
 
-  const related = siteConfig.menu.filter(i => i.id !== id && (i.category === item.category || i.category === "Snacks & Sides" || i.category === "Cafe & Shakes")).slice(0, 4);
+  const related = (siteConfig.menu || []).filter(i => i.id !== id && (i.category === item.category || i.category.includes("Snacks") || i.category.includes("Cafe"))).slice(0, 4);
 
   relatedGrid.innerHTML = related.map(rel => `
     <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
@@ -290,8 +328,8 @@ function openItemDetails(id) {
         <h5 class="text-xs font-bold text-gray-900 leading-tight">${rel.name}</h5>
         <p class="text-xs text-red-600 font-extrabold">₹${rel.price}</p>
       </div>
-      <button onclick="addToCart('${rel.id}')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700">
-        + Add
+      <button onclick="openItemCustomization('${rel.id}')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700">
+        + View
       </button>
     </div>
   `).join("");
@@ -299,30 +337,75 @@ function openItemDetails(id) {
   modal.classList.remove("hidden");
 }
 
-function closeItemModal() {
-  document.getElementById("item-details-modal").classList.add("hidden");
+function chooseSize(sizeName, basePrice) {
+  selectedSize = sizeName;
+  document.querySelectorAll(".size-btn").forEach(btn => {
+    btn.className = "size-btn p-2.5 rounded-xl border border-gray-200 text-center text-xs font-bold text-gray-700";
+  });
+  const selectedBtn = document.getElementById(`size-btn-${sizeName}`);
+  if (selectedBtn) {
+    selectedBtn.className = "size-btn p-2.5 rounded-xl border-2 border-red-600 bg-red-50 text-center text-xs font-bold text-gray-900";
+  }
+  recalculateModalPrice();
 }
 
-// ---------------- CART SYSTEM ----------------
-function addToCart(id) {
-  const item = siteConfig.menu.find(i => i.id === id);
-  if (!item || item.inStock === false) return;
+function toggleAddon(name, price, checked) {
+  if (checked) {
+    selectedAddons.push({ name, price });
+  } else {
+    selectedAddons = selectedAddons.filter(a => a.name !== name);
+  }
+  recalculateModalPrice();
+}
 
-  const existing = cart.find(c => c.id === id);
+function recalculateModalPrice() {
+  if (!currentModalItem) return;
+  const prices = currentModalItem.prices || { regular: currentModalItem.price, medium: currentModalItem.price + 100, large: currentModalItem.price + 200 };
+  let base = prices[selectedSize] || currentModalItem.price;
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.price, 0);
+  const total = base + addonsTotal;
+  const priceEl = document.getElementById("modal-calculated-price");
+  if (priceEl) priceEl.innerText = `₹${total}`;
+  return total;
+}
+
+function confirmAddToCart() {
+  if (!currentModalItem) return;
+  const finalItemPrice = recalculateModalPrice();
+  const addonsSummary = selectedAddons.map(a => a.name).join(", ");
+  
+  const cartEntryId = `${currentModalItem.id}_${selectedSize}_${selectedAddons.map(a=>a.name).sort().join('_')}`;
+
+  const displayName = currentModalItem.category.toLowerCase().includes("pizza") || currentModalItem.hasSizes
+    ? `${currentModalItem.name} (${selectedSize.toUpperCase()})${addonsSummary ? ' + ' + addonsSummary : ''}`
+    : currentModalItem.name;
+
+  const existing = cart.find(c => c.cartEntryId === cartEntryId);
   if (existing) {
     existing.qty += 1;
   } else {
-    cart.push({ ...item, qty: 1 });
+    cart.push({
+      cartEntryId,
+      id: currentModalItem.id,
+      name: displayName,
+      price: finalItemPrice,
+      image: currentModalItem.image,
+      qty: 1
+    });
   }
 
   saveCart();
   updateCartUI();
-  renderMenu();
-  showToast(`${item.name} cart me add ho gaya! 🍕`);
+  closeItemModal();
+  showToast(`${displayName} cart me add ho gaya! 🍕`);
 }
 
-function updateItemQty(id, delta) {
-  const index = cart.findIndex(c => c.id === id);
+function closeItemModal() {
+  document.getElementById("item-details-modal").classList.add("hidden");
+}
+
+function updateItemQty(cartEntryId, delta) {
+  const index = cart.findIndex(c => c.cartEntryId === cartEntryId || c.id === cartEntryId);
   if (index === -1) return;
 
   cart[index].qty += delta;
@@ -332,17 +415,16 @@ function updateItemQty(id, delta) {
 
   saveCart();
   updateCartUI();
-  renderMenu();
 }
 
 function saveCart() {
-  localStorage.setItem("slice_pizza_cart", JSON.stringify(cart));
+  localStorage.setItem("slice_pizza_cart_v5", JSON.stringify(cart));
 }
 
 function loadCartFromStorage() {
-  const saved = localStorage.getItem("slice_pizza_cart");
+  const saved = localStorage.getItem("slice_pizza_cart_v5");
   if (saved) {
-    try { cart = JSON.parse(saved); } catch (e) { cart = []; }
+    try { cart = JSON.parse(saved); } catch(e) { cart = []; }
   }
 }
 
@@ -351,18 +433,7 @@ function updateCartUI() {
   const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
 
   const navBadge = document.getElementById("nav-cart-badge");
-  const mobileBadge = document.getElementById("mobile-cart-badge");
-  const mobileTotal = document.getElementById("mobile-cart-total");
-  const mobileFloating = document.getElementById("mobile-floating-cart");
-
   if (navBadge) navBadge.innerText = totalCount;
-  if (mobileBadge) mobileBadge.innerText = totalCount;
-  if (mobileTotal) mobileTotal.innerText = totalPrice;
-
-  if (mobileFloating) {
-    if (totalCount > 0) mobileFloating.classList.remove("hidden");
-    else mobileFloating.classList.add("hidden");
-  }
 
   const container = document.getElementById("cart-items-container");
   const subtotalEl = document.getElementById("cart-subtotal");
@@ -388,15 +459,15 @@ function updateCartUI() {
           <div class="flex items-center gap-3">
             <img src="${item.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600'}" class="w-12 h-12 rounded-xl object-cover" alt="${item.name}">
             <div>
-              <h4 class="text-sm font-bold text-gray-900 leading-tight">${item.name}</h4>
+              <h4 class="text-xs font-bold text-gray-900 leading-tight">${item.name}</h4>
               <p class="text-xs text-gray-500 font-semibold">₹${item.price} × ${item.qty} = <span class="text-red-600 font-bold">₹${item.price * item.qty}</span></p>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
-            <button onclick="updateItemQty('${item.id}', -1)" class="w-6 h-6 rounded-full bg-white text-gray-700 shadow-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition text-xs font-bold">-</button>
+            <button onclick="updateItemQty('${item.cartEntryId || item.id}', -1)" class="w-6 h-6 rounded-full bg-white text-gray-700 shadow-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition text-xs font-bold">-</button>
             <span class="font-bold text-xs text-gray-900">${item.qty}</span>
-            <button onclick="updateItemQty('${item.id}', 1)" class="w-6 h-6 rounded-full bg-white text-gray-700 shadow-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition text-xs font-bold">+</button>
+            <button onclick="updateItemQty('${item.cartEntryId || item.id}', 1)" class="w-6 h-6 rounded-full bg-white text-gray-700 shadow-sm flex items-center justify-center hover:bg-red-600 hover:text-white transition text-xs font-bold">+</button>
           </div>
         </div>
       `).join("");
@@ -422,7 +493,7 @@ function handleOrderTypeChange(val) {
     if (locBtn) locBtn.classList.add("hidden");
   } else if (val === "Takeaway") {
     label.innerText = "Pickup Instructions / Notes";
-    textarea.placeholder = "Parcel time, no onions, extra oregano etc...";
+    textarea.placeholder = "Parcel time, extra oregano etc...";
     if (locBtn) locBtn.classList.add("hidden");
   } else {
     label.innerText = "Delivery Address *";
@@ -431,11 +502,10 @@ function handleOrderTypeChange(val) {
   }
 }
 
-// ---------------- LIVE LOCATION FETCHER ----------------
 function fetchCurrentLiveLocation() {
   const statusEl = document.getElementById("location-status-text");
   if (!navigator.geolocation) {
-    alert("Aapka browser geolocation support nahi karta.");
+    alert("Geolocation browser me support nahi karta.");
     return;
   }
 
@@ -446,24 +516,22 @@ function fetchCurrentLiveLocation() {
       const lng = position.coords.longitude;
       const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
       detectedUserLocation = mapsUrl;
-      statusEl.innerHTML = `<span class="text-green-600 font-bold">✅ Live Location Captured! (WhatsApp par maps link jayega)</span>`;
-      showToast("Live Location Captured Successfully! 📍");
+      statusEl.innerHTML = `<span class="text-green-600 font-bold">✅ Live GPS Captured! (WhatsApp par exact maps link attach ho jayega)</span>`;
+      showToast("Live Location Captured! 📍");
     },
     (err) => {
-      statusEl.innerHTML = `<span class="text-amber-600 font-bold">⚠️ GPS permission deny ho gayi. Aap WhatsApp chat par direct live location share kar sakte hain.</span>`;
+      statusEl.innerHTML = `<span class="text-amber-600 font-bold">⚠️ GPS allow nahi hua. Aap WhatsApp chat par direct live location share kar sakte hain.</span>`;
     }
   );
 }
 
-// ---------------- PLACE ORDER & SYNC TO ADMIN ----------------
 function handlePlaceOrder(e) {
   e.preventDefault();
   if (cart.length === 0) {
-    alert("Pehle cart me items add karein!");
+    alert("Cart empty hai!");
     return;
   }
 
-  // Refresh latest config
   siteConfig = getSiteConfig();
 
   const name = document.getElementById("cust-name").value.trim();
@@ -471,13 +539,11 @@ function handlePlaceOrder(e) {
   const orderType = document.getElementById("cust-order-type").value;
   const paymentMethod = document.getElementById("cust-payment-type").value;
   const address = document.getElementById("cust-address").value.trim();
-  const email = document.getElementById("cust-email").value.trim();
   const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
 
   const orderId = "ORD" + Math.floor(100000 + Math.random() * 900000);
   lastGeneratedOrderId = orderId;
 
-  // Save to Master Orders List
   const newOrder = {
     id: orderId,
     name,
@@ -485,7 +551,6 @@ function handlePlaceOrder(e) {
     orderType,
     paymentMethod,
     address,
-    email,
     location: detectedUserLocation || "",
     total,
     status: "Received",
@@ -500,7 +565,6 @@ function handlePlaceOrder(e) {
 
   localStorage.setItem("slice_last_order_phone", phone);
 
-  // Construct Beautiful WhatsApp Message
   let msg = `🍕 *NEW ORDER #${orderId} - ${(siteConfig.shopName || 'SLICE PIZZA & CAFE').toUpperCase()}* 🍕\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `🆔 *Order ID:* #${orderId}\n`;
@@ -509,12 +573,9 @@ function handlePlaceOrder(e) {
   msg += `🛵 *Type:* ${orderType}\n`;
   msg += `📍 *Address/Table:* ${address}\n`;
   if (detectedUserLocation) {
-    msg += `🗺️ *Live GPS Location:* ${detectedUserLocation}\n`;
-  } else if (orderType === "Home Delivery") {
-    msg += `📍 _(Tip: Aap is WhatsApp chat par apni 'Live Location' bhi attach karke send kar sakte hain)_\n`;
+    msg += `🗺️ *Live GPS Map:* ${detectedUserLocation}\n`;
   }
   msg += `💳 *Payment:* ${paymentMethod}\n`;
-  if (email) msg += `✉️ *Email:* ${email}\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `📋 *ORDER ITEMS:*
 `;
@@ -526,7 +587,9 @@ function handlePlaceOrder(e) {
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `💰 *TOTAL AMOUNT: ₹${total}*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `⏱️ Time: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n`;
+  if (paymentMethod === "UPI / QR Code Scan") {
+    msg += `📲 *Payment Note:* Payment screenshot attached with this message.\n`;
+  }
   msg += `_Order placed directly via website._`;
 
   pendingWhatsAppMessage = msg;
@@ -567,7 +630,7 @@ function proceedToWhatsAppAfterPayment() {
   closeUpiModal();
   const existingOrders = getAllOrders();
   const found = existingOrders.find(o => o.id === lastGeneratedOrderId);
-  completeOrderProcess(pendingWhatsAppMessage + `\n✅ *Payment Status:* Paid Online via UPI QR`, found);
+  completeOrderProcess(pendingWhatsAppMessage, found);
 }
 
 function completeOrderProcess(message, orderObj) {
@@ -606,7 +669,7 @@ function showInvoiceModal(order) {
       <div class="flex justify-between"><span>Phone:</span> <strong>${order.phone}</strong></div>
       <div class="flex justify-between"><span>Type:</span> <strong>${order.orderType}</strong></div>
       <div class="flex justify-between"><span>Address:</span> <span>${order.address}</span></div>
-      ${order.location ? `<div class="flex justify-between"><span>GPS Link:</span> <a href="${order.location}" target="_blank" class="text-blue-600 underline font-bold">Open Map</a></div>` : ''}
+      ${order.location ? `<div class="flex justify-between"><span>GPS Map:</span> <a href="${order.location}" target="_blank" class="text-blue-600 underline font-bold">Open GPS</a></div>` : ''}
       <div class="flex justify-between"><span>Payment:</span> <strong>${order.paymentMethod}</strong></div>
       <div class="flex justify-between"><span>Date:</span> <span>${order.date}</span></div>
     </div>
@@ -627,7 +690,7 @@ function showInvoiceModal(order) {
     </div>
 
     <div class="text-center pt-2 text-[11px] text-gray-400">
-      Aap is order ka live status <a href="track.html" class="text-red-600 underline font-bold">Track Order</a> page par dekh sakte hain.
+      Track status on <a href="track.html" class="text-red-600 underline font-bold">Track Order</a> page.
     </div>
   `;
 

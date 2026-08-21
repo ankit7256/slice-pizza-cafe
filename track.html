@@ -6,71 +6,51 @@
   <title>Track Your Order - Slice Pizza & Cafe</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/custom.css">
 </head>
-<body class="bg-[#faf7f2] text-gray-800 antialiased selection:bg-red-500 selection:text-white">
-
-  <!-- Navbar -->
+<body class="bg-[#faf7f2] text-gray-800 antialiased">
   <nav class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-gray-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-red-200">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center text-white text-2xl shadow-lg">
           <i class="fa-solid fa-pizza-slice"></i>
         </div>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-1.5">
-            SLICE <span class="text-red-600 font-serif italic">Pizza & Cafe</span>
-          </h1>
-          <p class="text-[10px] text-gray-400 font-semibold tracking-wider uppercase">Live Order Tracking</p>
-        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-gray-900">SLICE <span class="text-red-600 font-serif italic">Pizza & Cafe</span></h1>
       </a>
-
       <div class="hidden md:flex items-center gap-6 text-sm font-bold text-gray-700">
-        <a href="index.html" class="hover:text-red-600 transition">Home</a>
-        <a href="index.html#menu-section" class="hover:text-red-600 transition">Our Menu</a>
-        <a href="track.html" class="text-red-600 font-extrabold flex items-center gap-1">
-          <i class="fa-solid fa-location-dot"></i> Live Tracker
-        </a>
-        <a href="customers.html" class="hover:text-red-600 transition">Our Customers</a>
-        <a href="about.html" class="hover:text-red-600 transition">About Us</a>
+        <a href="index.html" class="hover:text-red-600">Home</a>
+        <a href="index.html#menu-section" class="hover:text-red-600">Menu</a>
+        <a href="track.html" class="text-red-600 font-extrabold flex items-center gap-1"><i class="fa-solid fa-location-dot"></i> Live Tracker</a>
+        <a href="customers.html" class="hover:text-red-600">Our Customers</a>
+        <a href="about.html" class="hover:text-red-600">About Us</a>
       </div>
-
-      <a href="index.html" class="px-4 py-2 bg-red-600 text-white rounded-full font-bold text-xs shadow hover:bg-red-700">
-        🍕 Order Pizza
-      </a>
+      <a href="index.html" class="px-4 py-2 bg-red-600 text-white rounded-full font-bold text-xs shadow hover:bg-red-700">Order Pizza</a>
     </div>
   </nav>
 
-  <!-- Tracker Header -->
   <section class="bg-gradient-to-b from-amber-50 via-orange-50/40 to-transparent py-12">
     <div class="max-w-4xl mx-auto px-4 text-center space-y-3">
       <span class="px-3.5 py-1.5 bg-amber-500 text-gray-950 rounded-full text-xs font-black tracking-wider uppercase">📍 Realtime Delivery Tracker</span>
       <h1 class="text-3xl sm:text-4xl font-black text-gray-950">Aapka Order Kahan Tak Pahuncha?</h1>
-      <p class="text-gray-600 text-sm">Apna 10-Digit Mobile Number ya Order ID enter karein aur live status dekhein.</p>
-
+      <p class="text-gray-600 text-sm">Apna 10-Digit Mobile Number ya Order ID enter karein.</p>
       <div class="max-w-md mx-auto pt-4 flex gap-2">
         <input type="text" id="track-search-input" placeholder="Enter Mobile No (Ex: 9876543210)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm">
-        <button onclick="searchOrderStatus()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-2xl shadow transition">
-          Track
-        </button>
+        <button onclick="searchOrderStatus()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-2xl shadow transition">Track</button>
       </div>
     </div>
   </section>
 
-  <!-- Tracking Result Container -->
   <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-    <div id="tracking-result-container">
-      <!-- Injected via JS -->
-    </div>
+    <div id="tracking-result-container"></div>
   </main>
 
   <script src="js/shared.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const lastOrderPhone = localStorage.getItem("slice_last_order_phone");
-      if (lastOrderPhone) {
-        document.getElementById("track-search-input").value = lastOrderPhone;
+      const lastPhone = localStorage.getItem("slice_last_order_phone");
+      if (lastPhone) {
+        document.getElementById("track-search-input").value = lastPhone;
         searchOrderStatus();
       }
     });
@@ -81,131 +61,47 @@
       const orders = getAllOrders();
 
       if (!q) {
-        container.innerHTML = `
-          <div class="bg-white p-8 rounded-3xl border border-gray-100 text-center shadow-sm">
-            <i class="fa-solid fa-search text-gray-300 text-4xl mb-3"></i>
-            <p class="text-sm font-bold text-gray-600">Mobile number ya Order ID enter karein</p>
-          </div>
-        `;
+        container.innerHTML = `<div class="bg-white p-8 rounded-3xl border border-gray-100 text-center shadow-sm"><p class="text-sm font-bold text-gray-600">Mobile number enter karein.</p></div>`;
         return;
       }
 
       const matching = orders.filter(o => o.phone.includes(q) || o.id.toLowerCase().includes(q));
-
       if (matching.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white p-8 rounded-3xl border border-gray-100 text-center shadow-sm space-y-2">
-            <div class="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto text-2xl">
-              <i class="fa-solid fa-circle-exclamation"></i>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900">Koi active order nahi mila!</h3>
-            <p class="text-xs text-gray-500">Kripya apna wahi mobile number dalein jisse order place kiya tha.</p>
-          </div>
-        `;
+        container.innerHTML = `<div class="bg-white p-8 rounded-3xl border border-gray-100 text-center shadow-sm"><p class="text-sm font-bold text-gray-600">Koi active order nahi mila.</p></div>`;
         return;
       }
 
-      container.innerHTML = matching.map(order => renderOrderCard(order)).join("");
-    }
-
-    function renderOrderCard(order) {
       const statusSteps = ["Received", "Preparing", "Out for Delivery", "Delivered"];
-      const currentIdx = statusSteps.indexOf(order.status || "Received");
-
-      return `
-        <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden p-6 sm:p-8 space-y-6">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-gray-100 pb-4">
-            <div>
-              <span class="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-black rounded-lg uppercase">Order ID: #${order.id}</span>
-              <h3 class="text-xl font-black text-gray-900 mt-2">${order.name} (${order.orderType})</h3>
-              <p class="text-xs text-gray-400">Order Placed on: ${order.date || 'Recent'}</p>
-            </div>
-            <div class="text-right">
-              <span class="text-xs text-gray-400 block font-semibold">Total Bill</span>
+      container.innerHTML = matching.map(order => {
+        const currentIdx = statusSteps.indexOf(order.status || "Received");
+        return `
+          <div class="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 space-y-6">
+            <div class="flex justify-between items-center border-b pb-4">
+              <div>
+                <span class="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-black rounded-lg uppercase">#${order.id}</span>
+                <h3 class="text-xl font-black text-gray-900 mt-2">${order.name} (${order.orderType})</h3>
+              </div>
               <span class="text-2xl font-black text-red-600">₹${order.total}</span>
             </div>
-          </div>
 
-          <div class="py-4">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Current Order Progress:</p>
-            <div class="grid grid-cols-4 gap-2 text-center relative">
-              ${statusSteps.map((step, idx) => {
-                const isPassed = idx <= currentIdx;
-                const isCurrent = idx === currentIdx;
-                return `
-                  <div class="flex flex-col items-center space-y-2">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-xs transition-all shadow ${isCurrent ? 'bg-red-600 text-white ring-4 ring-red-100 scale-110' : isPassed ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-400'}">
-                      ${isPassed && !isCurrent ? '<i class="fa-solid fa-check"></i>' : idx + 1}
-                    </div>
-                    <span class="text-[11px] font-bold ${isCurrent ? 'text-red-600' : isPassed ? 'text-gray-900' : 'text-gray-400'}">${step}</span>
+            <div class="grid grid-cols-4 gap-2 text-center">
+              ${statusSteps.map((step, idx) => `
+                <div class="flex flex-col items-center space-y-2">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-xs ${idx <= currentIdx ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400'}">
+                    ${idx + 1}
                   </div>
-                `;
-              }).join("")}
+                  <span class="text-[11px] font-bold ${idx <= currentIdx ? 'text-red-600' : 'text-gray-400'}">${step}</span>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-2xl text-xs space-y-1">
+              <p><strong>Items:</strong> ${order.itemsSummary || 'Pizza items'}</p>
+              <p><strong>Address:</strong> ${order.address}</p>
             </div>
           </div>
-
-          <div class="bg-gray-50 p-4 rounded-2xl space-y-2 text-xs">
-            <p class="font-bold text-gray-800">Items: ${order.itemsSummary || 'Pizza & Cafe Items'}</p>
-            <p class="text-gray-600"><i class="fa-solid fa-location-dot text-red-500 mr-1"></i> Address/Table: ${order.address}</p>
-            <p class="text-gray-600"><i class="fa-solid fa-credit-card text-green-500 mr-1"></i> Payment: ${order.paymentMethod}</p>
-          </div>
-
-          <div class="flex justify-between items-center pt-2">
-            <a href="https://wa.me/917667610195?text=Hello%20Slice%20Pizza,%20Update%20regarding%20Order%20%23${order.id}" target="_blank" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5">
-              <i class="fa-brands fa-whatsapp"></i> Chat with Kitchen
-            </a>
-            <button onclick="printOrderInvoice('${order.id}')" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs flex items-center gap-1.5">
-              <i class="fa-solid fa-receipt"></i> View Full Invoice
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    function printOrderInvoice(id) {
-      const orders = getAllOrders();
-      const order = orders.find(o => o.id === id);
-      if (!order) return;
-
-      const printWindow = window.open('', '_blank', 'width=600,height=700');
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Invoice #${order.id} - Slice Pizza & Cafe</title>
-          <style>
-            body { font-family: monospace; padding: 20px; color: #111; }
-            .header { text-align: center; border-bottom: 2px dashed #999; padding-bottom: 10px; }
-            .item-row { display: flex; justify-content: space-between; margin: 6px 0; }
-            .total { border-top: 2px dashed #999; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 16px; }
-            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body onload="window.print()">
-          <div class="header">
-            <h2>🍕 SLICE PIZZA & CAFE</h2>
-            <p>Direct Store Bill & Tax Invoice</p>
-            <p>Date: ${order.date || new Date().toLocaleDateString()}</p>
-          </div>
-          <p><strong>Order ID:</strong> #${order.id}</p>
-          <p><strong>Customer:</strong> ${order.name}</p>
-          <p><strong>Phone:</strong> ${order.phone}</p>
-          <p><strong>Type:</strong> ${order.orderType}</p>
-          <p><strong>Address:</strong> ${order.address}</p>
-          <hr style="border: 1px dashed #ccc">
-          <p><strong>ITEMS:</strong></p>
-          ${order.cart.map(i => `<div class="item-row"><span>${i.name} x ${i.qty}</span><span>₹${i.price * i.qty}</span></div>`).join("")}
-          <div class="total item-row">
-            <span>GRAND TOTAL</span>
-            <span>₹${order.total}</span>
-          </div>
-          <p><strong>Payment Mode:</strong> ${order.paymentMethod}</p>
-          <div class="footer">
-            <p>Thank You For Ordering with Slice Pizza & Cafe!</p>
-          </div>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
+        `;
+      }).join("");
     }
   </script>
 </body>

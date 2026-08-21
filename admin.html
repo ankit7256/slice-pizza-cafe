@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slice Master Control Room - Admin Dashboard (V4)</title>
+  <title>Slice Master Control Room - Admin Control (V5)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,45 +11,32 @@
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased min-h-screen">
 
-  <!-- ================= SECURE AUTHENTICATION SCREEN ================= -->
   <div id="auth-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl relative overflow-hidden">
-      <div class="absolute -top-24 -left-24 w-48 h-48 bg-red-600/20 rounded-full blur-3xl"></div>
-      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl"></div>
+      <div class="w-16 h-16 bg-gradient-to-tr from-red-600 to-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-lg shadow-red-500/20">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h2 class="text-2xl font-black text-white">Slice Master Control</h2>
+      <p class="text-xs text-slate-400 mt-1 mb-6">Kitchen Live Orders & Store Management Hub</p>
+      
+      <div id="lockout-banner" class="hidden p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-xs font-bold mb-4">
+        ⚠️ Too many failed attempts. Locked for <span id="lockout-timer">30</span>s.
+      </div>
 
-      <div class="relative">
-        <div class="w-16 h-16 bg-gradient-to-tr from-red-600 to-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-lg shadow-red-500/20">
-          <i class="fa-solid fa-shield-halved"></i>
-        </div>
-        <h2 class="text-2xl font-black text-white">Slice Master Control</h2>
-        <p class="text-xs text-slate-400 mt-1 mb-6">Kitchen Live Orders & Store Management Hub</p>
-        
-        <div id="lockout-banner" class="hidden p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-xs font-bold mb-4">
-          ⚠️ Too many failed attempts. Locked for <span id="lockout-timer">30</span>s.
-        </div>
+      <form id="login-form" onsubmit="handleSecureLogin(event)" class="space-y-4">
+        <input type="password" id="admin-pass-input" placeholder="Enter Admin Password" required autofocus class="w-full text-center tracking-wider text-lg font-bold py-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl text-white focus:bg-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none">
+        <button type="submit" id="login-btn" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 transition">
+          🔐 Access Master Dashboard
+        </button>
+      </form>
 
-        <form id="login-form" onsubmit="handleSecureLogin(event)" class="space-y-4">
-          <div class="relative">
-            <input type="password" id="admin-pass-input" placeholder="Enter Admin Password" required autofocus class="w-full text-center tracking-wider text-lg font-bold py-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl text-white focus:bg-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none">
-          </div>
-          
-          <button type="submit" id="login-btn" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 transition">
-            🔐 Access Master Dashboard
-          </button>
-        </form>
-
-        <div class="mt-6 pt-4 border-t border-slate-800 flex justify-between text-xs text-slate-400">
-          <span>Default Key: <strong class="text-red-400">admin1234</strong></span>
-          <a href="index.html" class="text-amber-400 hover:underline">← Pizza Store</a>
-        </div>
+      <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
+        <a href="index.html" class="text-amber-400 hover:underline">← Back to Pizza Store</a>
       </div>
     </div>
   </div>
 
-  <!-- ================= MAIN ADMIN DASHBOARD ================= -->
   <div id="dashboard-screen" class="hidden min-h-screen flex flex-col bg-slate-950 text-slate-200">
-    
-    <!-- Top Bar -->
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -58,23 +45,21 @@
           </div>
           <div>
             <h1 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              Slice Control Center <span class="px-2 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 rounded-md text-[10px] font-black uppercase">Kitchen Live</span>
+              Slice Control Center <span class="px-2 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 rounded-md text-[10px] font-black uppercase">Live</span>
             </h1>
-            <p class="text-xs text-slate-400">Manage Live Orders, Menu, Slides, Categories & UPI QR</p>
+            <p class="text-xs text-slate-400">Orders, Customizations, Slides & Store Configuration</p>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
-          <button onclick="testNotificationSound()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold rounded-xl transition border border-slate-700 flex items-center gap-1.5" title="Test Alert Bell">
-            <i class="fa-solid fa-bell"></i>
-            <span class="hidden sm:inline">Test Bell</span>
+          <button onclick="publishAllChangesLive()" class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-lg transition flex items-center gap-1.5 border border-green-400">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Save & Publish Live</span>
           </button>
-          
-          <a href="index.html" target="_blank" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-700">
+          <a href="index.html" target="_blank" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700 flex items-center gap-1">
             <i class="fa-solid fa-arrow-up-right-from-square text-amber-400"></i>
             <span class="hidden sm:inline">View Store</span>
           </a>
-          
           <button onclick="handleAdminLogout()" class="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-red-500/30">
             <i class="fa-solid fa-power-off"></i>
           </button>
@@ -82,31 +67,24 @@
       </div>
     </header>
 
-    <!-- Tab Navigation -->
     <div class="bg-slate-900/60 border-b border-slate-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto no-scrollbar py-2.5">
         <button onclick="switchTab('tab-orders')" id="btn-tab-orders" class="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 text-white flex items-center gap-2 shadow-lg">
-          <i class="fa-solid fa-bell animate-bounce"></i> <span>1. Live Orders Queue (<span id="tab-count-orders">0</span>)</span>
+          <i class="fa-solid fa-bell animate-bounce"></i> <span>1. Live Orders (<span id="tab-count-orders">0</span>)</span>
         </button>
         <button onclick="switchTab('tab-menu')" id="btn-tab-menu" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-          <i class="fa-solid fa-pizza-slice"></i> <span>2. Menu Items & Categories</span>
+          <i class="fa-solid fa-pizza-slice"></i> <span>2. Menu & Prices</span>
         </button>
         <button onclick="switchTab('tab-banners')" id="btn-tab-banners" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-          <i class="fa-solid fa-images"></i> <span>3. Top 6 Slides</span>
-        </button>
-        <button onclick="switchTab('tab-customers')" id="btn-tab-customers" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-          <i class="fa-solid fa-users"></i> <span>4. Customer Reviews</span>
+          <i class="fa-solid fa-images"></i> <span>3. Home Slider</span>
         </button>
         <button onclick="switchTab('tab-settings')" id="btn-tab-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-          <i class="fa-solid fa-qrcode"></i> <span>5. Store Phone, UPI & QR</span>
+          <i class="fa-solid fa-gear"></i> <span>4. Phone, UPI & QR</span>
         </button>
       </div>
     </div>
 
-    <!-- Main Content Area -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
-      
-      <!-- ================= TAB 1: LIVE ORDERS QUEUE ================= -->
       <div id="tab-orders" class="tab-content space-y-6">
         <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
@@ -114,34 +92,24 @@
               <h3 class="text-xl font-bold text-white flex items-center gap-2">
                 <i class="fa-solid fa-bell text-red-500 animate-pulse"></i> Live Incoming Orders
               </h3>
-              <p class="text-xs text-slate-400">Orders placed on website appear here in real-time with sound chime and customer GPS live location.</p>
+              <p class="text-xs text-slate-400">Realtime customer orders appear here with audio chime and exact GPS map location.</p>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="clearCompletedOrders()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
-                Clear Delivered Orders
-              </button>
-            </div>
+            <button onclick="clearCompletedOrders()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+              Clear Completed
+            </button>
           </div>
-
-          <div id="admin-orders-list-container" class="space-y-4">
-            <!-- Injected via JS -->
-          </div>
+          <div id="admin-orders-list-container" class="space-y-4"></div>
         </div>
       </div>
 
-      <!-- ================= TAB 2: MENU & CATEGORIES (WITH IMAGE UPLOADER & INLINE CATEGORY SELECTOR) ================= -->
       <div id="tab-menu" class="tab-content hidden space-y-6">
-        
-        <!-- Category Manager Card -->
         <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-tags text-amber-400"></i> Manage Categories (Add / Delete)
+            <i class="fa-solid fa-tags text-amber-400"></i> Categories
           </h3>
-          <div class="flex flex-wrap gap-2 items-center" id="admin-categories-tags">
-            <!-- Injected via JS -->
-          </div>
+          <div class="flex flex-wrap gap-2 items-center" id="admin-categories-tags"></div>
           <div class="flex gap-2 max-w-md pt-2">
-            <input type="text" id="new-category-input" placeholder="New Category Name (Ex: Pasta, Desserts)" class="flex-1 px-3.5 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+            <input type="text" id="new-category-input" placeholder="New Category (Ex: Pasta, Desserts)" class="flex-1 px-3.5 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
             <button onclick="addNewCategory()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold text-xs rounded-xl shadow">
               ➕ Add Category
             </button>
@@ -149,50 +117,53 @@
         </div>
 
         <div class="grid lg:grid-cols-12 gap-8">
-          
-          <!-- Add / Edit Menu Form with Mobile/PC Photo Uploader -->
           <div class="lg:col-span-5">
             <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl sticky top-28 space-y-4">
               <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h2 class="text-base font-bold text-white flex items-center gap-2" id="menu-form-heading">
-                  <i class="fa-solid fa-circle-plus text-red-500"></i> Naya Item Add Karein
+                  <i class="fa-solid fa-circle-plus text-red-500"></i> Add / Edit Item
                 </h2>
-                <button id="cancel-menu-edit-btn" onclick="resetMenuForm()" class="hidden text-xs text-slate-400 hover:text-slate-200 font-bold">Cancel Edit</button>
+                <button id="cancel-menu-edit-btn" onclick="resetMenuForm()" class="hidden text-xs text-slate-400 hover:text-slate-200 font-bold">Cancel</button>
               </div>
 
               <form id="menu-item-form" onsubmit="handleSaveMenuItem(event)" class="space-y-3.5">
                 <input type="hidden" id="menu-item-id">
-
                 <div>
                   <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Item Name *</label>
-                  <input type="text" id="menu-item-name" required placeholder="Ex: Farmhouse Special Pizza" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-red-500 text-white focus:outline-none">
+                  <input type="text" id="menu-item-name" required placeholder="Ex: Farmhouse Special Pizza" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Price (₹) *</label>
-                    <input type="number" id="menu-item-price" required placeholder="249" min="0" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-red-500 text-white focus:outline-none">
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Regular Price (₹) *</label>
+                    <input type="number" id="menu-item-price" required placeholder="249" min="0" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
                   </div>
                   <div>
                     <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Category *</label>
-                    <select id="menu-item-category" class="w-full px-3 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-red-500 text-white focus:outline-none">
-                      <!-- Injected dynamically -->
-                    </select>
+                    <select id="menu-item-category" class="w-full px-3 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none"></select>
                   </div>
                 </div>
 
-                <!-- Product Photo Uploader from Computer / Mobile -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Medium Price (₹)</label>
+                    <input type="number" id="menu-item-price-med" placeholder="399" class="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Large Price (₹)</label>
+                    <input type="number" id="menu-item-price-large" placeholder="549" class="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+                  </div>
+                </div>
+
                 <div class="space-y-2 p-3 bg-slate-800/60 rounded-2xl border border-slate-700">
                   <label class="block text-xs font-bold uppercase text-amber-400">
-                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload Photo (Mobile / PC se):
+                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload Photo (Device Se):
                   </label>
                   <input type="file" id="menu-item-file-input" accept="image/*" onchange="handleImageFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer">
-                  
                   <div id="item-image-preview-container" class="hidden pt-2 flex items-center gap-3">
                     <img id="item-image-preview" src="" class="w-16 h-16 rounded-xl object-cover border border-slate-600" alt="Preview">
-                    <span class="text-xs text-green-400 font-bold">Image selected!</span>
+                    <span class="text-xs text-green-400 font-bold">Photo Selected!</span>
                   </div>
-
                   <div class="pt-1">
                     <span class="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Ya Photo URL dalein:</span>
                     <input type="url" id="menu-item-image" placeholder="https://images.unsplash.com/..." class="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none">
@@ -201,35 +172,27 @@
 
                 <div>
                   <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Description</label>
-                  <textarea id="menu-item-desc" rows="2" placeholder="Toppings, cheese, sauces..." class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-red-500 text-white focus:outline-none"></textarea>
+                  <textarea id="menu-item-desc" rows="2" placeholder="Toppings, cheese, sauces..." class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none"></textarea>
                 </div>
 
                 <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700">
-                  <span class="text-xs font-bold text-slate-300">In-Stock Available:</span>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="menu-item-instock" class="sr-only peer" checked>
-                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                  </label>
+                  <span class="text-xs font-bold text-slate-300">In-Stock:</span>
+                  <input type="checkbox" id="menu-item-instock" checked class="w-5 h-5 accent-green-600 rounded cursor-pointer">
                 </div>
 
                 <button type="submit" id="menu-submit-btn" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">
-                  ➕ Save Item to Menu
+                  ➕ Save Item
                 </button>
               </form>
             </div>
           </div>
 
-          <!-- Menu Items List with Inline Category Selector -->
           <div class="lg:col-span-7 space-y-4">
             <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
               <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
-                <div>
-                  <h3 class="font-bold text-white">Live Menu List</h3>
-                  <p class="text-[11px] text-slate-400">Category ko direct dropdown se bhi change kar sakte hain.</p>
-                </div>
+                <h3 class="font-bold text-white">Live Menu List</h3>
                 <span class="text-xs text-slate-400">Total: <strong class="text-amber-400" id="stat-menu-count">0</strong></span>
               </div>
-
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                   <thead>
@@ -241,141 +204,72 @@
                       <th class="pb-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="admin-menu-table-body" class="divide-y divide-slate-800 text-slate-300">
-                    <!-- Injected via JS -->
-                  </tbody>
+                  <tbody id="admin-menu-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
                 </table>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- ================= TAB 3: TOP 6 SLIDES ================= -->
       <div id="tab-banners" class="tab-content hidden space-y-6">
         <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <div>
-              <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-images text-amber-400"></i> Manage Home Page Top Slides (Auto Slider)
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Apne mobile/PC se direct photo upload karein ya text change karein.</p>
-            </div>
-          </div>
-
-          <div id="admin-banners-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Injected via JS -->
-          </div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-images text-amber-400"></i> Manage Home Page Top Slides
+          </h3>
+          <div id="admin-banners-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
       </div>
 
-      <!-- ================= TAB 4: CUSTOMER REVIEWS ================= -->
-      <div id="tab-customers" class="tab-content hidden space-y-6">
-        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <div>
-              <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-users text-green-400"></i> Customer Reviews & Testimonials
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Customer reviews ko live manage karein.</p>
-            </div>
-          </div>
-
-          <div id="admin-customers-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Injected via JS -->
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= TAB 5: PHONE, UPI & QR UPLOAD ================= -->
       <div id="tab-settings" class="tab-content hidden space-y-6">
         <div class="grid md:grid-cols-2 gap-6">
-          
-          <!-- Store Contacts & WhatsApp Number Sync -->
           <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
             <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-brands fa-whatsapp text-green-500"></i> Store WhatsApp Order Number & Contacts
+              <i class="fa-brands fa-whatsapp text-green-500"></i> WhatsApp Order Number
             </h3>
-            <p class="text-xs text-slate-400">Yeh number update karne ke baad sabhi orders direct is naye number par jayenge.</p>
-
             <form onsubmit="handleSaveContactSettings(event)" class="space-y-3">
               <div>
-                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">WhatsApp Order Number (10 or 12 digits) *</label>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">WhatsApp Number *</label>
                 <input type="text" id="setting-phone" required placeholder="917667610195" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white font-mono font-bold">
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Instagram Profile URL</label>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Instagram URL</label>
                 <input type="url" id="setting-instagram" placeholder="https://instagram.com/slicepizzacafe" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
               </div>
               <div>
-                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Top Announcement Notice</label>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Top Announcement</label>
                 <input type="text" id="setting-announcement" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
               </div>
               <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition">
-                💾 Save Number & Social Links
+                💾 Save Contacts
               </button>
             </form>
           </div>
 
-          <!-- UPI QR Code & Custom Photo Upload -->
           <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
             <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-qrcode text-green-400"></i> UPI ID & Shop QR Code Photo
+              <i class="fa-solid fa-qrcode text-green-400"></i> UPI ID & QR Code Image
             </h3>
-            <p class="text-xs text-slate-400">Apni UPI ID dalein ya apne phone/PC se apna shop QR photo upload karein.</p>
-
             <form onsubmit="handleSaveUpiSettings(event)" class="space-y-3">
               <div>
                 <label class="block text-xs font-bold uppercase text-slate-400 mb-1">UPI ID *</label>
                 <input type="text" id="setting-upi-id" required placeholder="7667610195@upi" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white font-mono">
               </div>
-              
               <div class="space-y-2 p-3 bg-slate-800/60 rounded-2xl border border-slate-700">
-                <label class="block text-xs font-bold uppercase text-amber-400">
-                  <i class="fa-solid fa-image mr-1"></i> Upload Custom QR Photo from Device:
-                </label>
-                <input type="file" accept="image/*" onchange="handleQrFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-600 file:text-white hover:file:bg-green-700 cursor-pointer">
-                
-                <div id="custom-qr-preview-container" class="hidden pt-2 flex items-center gap-3">
+                <label class="block text-xs font-bold uppercase text-amber-400">Upload Shop QR Photo:</label>
+                <input type="file" accept="image/*" onchange="handleQrFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-600 file:text-white cursor-pointer">
+                <div id="custom-qr-preview-container" class="hidden pt-2">
                   <img id="custom-qr-preview" src="" class="w-20 h-20 rounded-xl object-contain bg-white p-1 border" alt="QR Preview">
-                  <span class="text-xs text-green-400 font-bold">QR Image active!</span>
                 </div>
               </div>
-
               <button type="submit" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs transition">
-                💾 Save UPI ID
+                💾 Save UPI
               </button>
             </form>
           </div>
-
-          <!-- Change Admin Password -->
-          <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4 md:col-span-2">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-key text-red-500"></i> Change Master Password
-            </h3>
-            <form onsubmit="handleChangePassword(event)" class="grid md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Current Password *</label>
-                <input type="password" id="curr-pass" required class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
-              </div>
-              <div>
-                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">New Strong Password *</label>
-                <input type="password" id="new-pass" minlength="6" required class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
-              </div>
-              <div class="md:col-span-2">
-                <button type="submit" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition">
-                  🔒 Update Master Password
-                </button>
-              </div>
-            </form>
-          </div>
-
         </div>
       </div>
-
     </div>
-
   </div>
 
   <script src="js/shared.js"></script>
