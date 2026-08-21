@@ -1,20 +1,43 @@
-// Slice Pizza & Cafe - Master Control Room Logic (V3 - Fixed Auth)
+// Slice Pizza & Cafe - Master Control Room (V4)
 let siteConfig = {};
 let failedAttempts = 0;
 let lockUntil = 0;
 let previousOrderCount = 0;
 let orderPollingInterval = null;
+let currentUploadedImageBase64 = "";
 
-const DEFAULT_HASH = "ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270"; 
+const DEFAULT_HASH = "ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270"; // sha256 for 'admin1234'
 
 document.addEventListener("DOMContentLoaded", async () => {
   siteConfig = getSiteConfig();
   checkAuthSession();
+  setupRealtimeListeners();
 });
+
+function setupRealtimeListeners() {
+  // BroadcastChannel listener for instant order alert from customer tab
+  try {
+    const bc = new BroadcastChannel("slice_sync_channel");
+    bc.onmessage = (ev) => {
+      if (ev.data && ev.data.type === "ORDER_PLACED") {
+        playOrderNotificationSound();
+        renderOrdersQueue();
+      }
+    };
+  } catch(e) {}
+
+  // Storage event listener fallback
+  window.addEventListener("storage", (e) => {
+    if (e.key === ORDERS_KEY) {
+      playOrderNotificationSound();
+      renderOrdersQueue();
+    }
+  });
+}
 
 // ---------------- AUTH ----------------
 function checkAuthSession() {
-  const isAuth = sessionStorage.getItem("slice_admin_auth_v3");
+  const isAuth = sessionStorage.getItem("slice_admin_auth_v4");
   if (isAuth === "true") {
     showDashboard();
   }
@@ -31,11 +54,10 @@ async function handleSecureLogin(e) {
 
   const passInput = document.getElementById("admin-pass-input").value.trim();
   const inputHash = await hashSHA256(passInput);
-  const currentHash = localStorage.getItem("slice_admin_hash_v3") || DEFAULT_HASH;
+  const currentHash = localStorage.getItem("slice_admin_hash_v4") || DEFAULT_HASH;
 
-  // Direct check for 'admin1234' default or exact SHA-256 hash match
   if (passInput === "admin1234" || inputHash === currentHash || inputHash === DEFAULT_HASH) {
-    sessionStorage.setItem("slice_admin_auth_v3", "true");
+    sessionStorage.setItem("slice_admin_auth_v4", "true");
     failedAttempts = 0;
     showDashboard();
   } else {
@@ -44,7 +66,7 @@ async function handleSecureLogin(e) {
       lockUntil = Date.now() + 30000;
       startLockoutTimer(30);
     } else {
-      alert(`Galat Password! (Attempt ${failedAttempts}/4). Default Password hai: admin1234`);
+      alert(`Galat Password! (Attempt ${failedAttempts}/4). Default Password: admin1234`);
     }
   }
 }
@@ -75,6 +97,7 @@ function showDashboard() {
   if (authScreen) authScreen.classList.add("hidden");
   if (dashScreen) dashScreen.classList.remove("hidden");
   
+  siteConfig = getSiteConfig();
   renderOrdersQueue();
   renderCategoryTags();
   populateCategorySelect();
@@ -88,13 +111,13 @@ function showDashboard() {
 
 function handleAdminLogout() {
   if (orderPollingInterval) clearInterval(orderPollingInterval);
-  sessionStorage.removeItem("slice_admin_auth_v3");
+  sessionStorage.removeItem("slice_admin_auth_v4");
   window.location.reload();
 }
 
 function testNotificationSound() {
   playOrderNotificationSound();
-  alert("🔔 Sound Test: Chime notification played successfully!");
+  alert("🔔 Sound Test: Kitchen bell notification chime baj gaya!");
 }
 
 // ---------------- TAB SWITCHING ----------------
@@ -137,7 +160,7 @@ function startOrderPolling() {
       alert(`🔔 NEW ORDER RECEIVED! Order #${latestOrders[0].id} for ₹${latestOrders[0].total}`);
     }
     previousOrderCount = latestOrders.length;
-  }, 3000);
+  }, 2500);
 }
 
 // ---------------- TAB 1: LIVE ORDERS QUEUE ----------------
@@ -154,7 +177,7 @@ function renderOrdersQueue() {
       <div class="py-12 text-center text-slate-500 space-y-2">
         <i class="fa-solid fa-receipt text-4xl mb-2 text-slate-700"></i>
         <p class="text-sm font-bold">Koi naya order nahi hai abhi.</p>
-        <p class="text-xs">Website par jaise hi order aayega, yahan bell sound ke sath live show hoga.</p>
+        <p class="text-xs">Customer ke order place karte hi yahan live bell sound ke sath aayega.</p>
       </div>
     `;
     return;
@@ -192,6 +215,7 @@ function renderOrdersQueue() {
           <div>
             <p class="text-slate-400 font-semibold uppercase">Order Type & Delivery:</p>
             <p class="text-slate-200 mt-0.5"><strong>${order.orderType}</strong> - ${order.address}</p>
+            ${order.location ? `<p class="mt-1"><a href="${order.location}" target="_blank" class="text-amber-400 underline font-bold"><i class="fa-solid fa-map-location-dot"></i> View Customer GPS Live Location</a></p>` : ''}
             <p class="text-slate-400 mt-1">Payment: <strong class="text-white">${order.paymentMethod}</strong></p>
           </div>
           <div>
@@ -238,7 +262,8 @@ function updateOrderStatus(id, newStatus) {
 }
 
 function openWhatsAppChat(phone, orderId, status) {
-  const targetPhone = phone.startsWith("91") ? phone : "91" + phone;
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const targetPhone = cleanPhone.startsWith("91") ? cleanPhone : "91" + cleanPhone;
   const msg = `Hello! Update regarding your Slice Pizza & Cafe Order #${orderId}: Your order is now *${status}*. Thank you!`;
   window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -324,6 +349,7 @@ function addNewCategory() {
     saveSiteConfig(siteConfig);
     renderCategoryTags();
     populateCategorySelect();
+    renderAdminMenu();
     input.value = "";
   }
 }
@@ -334,6 +360,17 @@ function deleteCategory(cat) {
     saveSiteConfig(siteConfig);
     renderCategoryTags();
     populateCategorySelect();
+    renderAdminMenu();
+  }
+}
+
+// Quick Change Category of an item directly from the table
+function changeItemCategoryInline(id, newCat) {
+  const item = siteConfig.menu.find(i => i.id === id);
+  if (item) {
+    item.category = newCat;
+    saveSiteConfig(siteConfig);
+    renderAdminMenu();
   }
 }
 
@@ -342,21 +379,26 @@ function renderAdminMenu() {
   const countEl = document.getElementById("stat-menu-count");
   if (!tbody) return;
 
-  if (countEl) countEl.innerText = siteConfig.menu.length;
+  if (countEl) countEl.innerText = (siteConfig.menu || []).length;
 
-  tbody.innerHTML = siteConfig.menu.map(item => `
+  const cats = siteConfig.categories || ["Veg Pizza", "Non-Veg Pizza", "Burgers", "Cafe & Shakes", "Snacks & Sides"];
+
+  tbody.innerHTML = (siteConfig.menu || []).map(item => `
     <tr class="hover:bg-slate-800/50 transition">
       <td class="py-3.5 pr-3">
         <div class="flex items-center gap-3">
-          <img src="${item.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600'}" class="w-10 h-10 rounded-lg object-cover" alt="${item.name}">
+          <img src="${item.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600'}" class="w-12 h-12 rounded-xl object-cover" alt="${item.name}">
           <div>
-            <p class="font-bold text-white">${item.name}</p>
+            <p class="font-bold text-white text-sm">${item.name}</p>
             <p class="text-xs text-slate-400 line-clamp-1">${item.desc || ''}</p>
           </div>
         </div>
       </td>
       <td class="py-3.5 px-3">
-        <span class="px-2.5 py-1 bg-slate-800 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700">${item.category}</span>
+        <!-- Direct Category Selector Dropdown -->
+        <select onchange="changeItemCategoryInline('${item.id}', this.value)" class="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-lg focus:ring-2 focus:ring-red-500">
+          ${cats.map(c => `<option value="${c}" ${c === item.category ? 'selected' : ''}>${c}</option>`).join("")}
+        </select>
       </td>
       <td class="py-3.5 px-3 font-bold text-amber-400">₹${item.price}</td>
       <td class="py-3.5 px-3">
@@ -376,20 +418,38 @@ function renderAdminMenu() {
   `).join("");
 }
 
+// Handle Image Upload from Mobile / PC Device
+async function handleImageFileUpload(e) {
+  const file = e.target.files[0];
+  if (file) {
+    try {
+      const base64 = await fileToBase64(file);
+      currentUploadedImageBase64 = base64;
+      document.getElementById("item-image-preview").src = base64;
+      document.getElementById("item-image-preview-container").classList.remove("hidden");
+      document.getElementById("menu-item-image").value = ""; // Clear text url if file chosen
+    } catch(err) {
+      alert("Image read error, please try another photo.");
+    }
+  }
+}
+
 function handleSaveMenuItem(e) {
   e.preventDefault();
   const id = document.getElementById("menu-item-id").value;
   const name = document.getElementById("menu-item-name").value.trim();
   const price = parseFloat(document.getElementById("menu-item-price").value);
   const category = document.getElementById("menu-item-category").value;
-  const image = document.getElementById("menu-item-image").value.trim();
+  const textImage = document.getElementById("menu-item-image").value.trim();
   const desc = document.getElementById("menu-item-desc").value.trim();
   const inStock = document.getElementById("menu-item-instock").checked;
+
+  const finalImage = currentUploadedImageBase64 || textImage || "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600";
 
   if (id) {
     const idx = siteConfig.menu.findIndex(i => i.id === id);
     if (idx !== -1) {
-      siteConfig.menu[idx] = { ...siteConfig.menu[idx], name, price, category, image, desc, inStock };
+      siteConfig.menu[idx] = { ...siteConfig.menu[idx], name, price, category, image: finalImage, desc, inStock };
     }
   } else {
     siteConfig.menu.unshift({
@@ -397,7 +457,7 @@ function handleSaveMenuItem(e) {
       name,
       price,
       category,
-      image: image || "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600",
+      image: finalImage,
       desc,
       inStock
     });
@@ -406,7 +466,7 @@ function handleSaveMenuItem(e) {
   saveSiteConfig(siteConfig);
   resetMenuForm();
   renderAdminMenu();
-  alert("Menu item save ho gaya!");
+  alert("Item successfully live update ho gaya!");
 }
 
 function editMenuItem(id) {
@@ -417,18 +477,27 @@ function editMenuItem(id) {
   document.getElementById("menu-item-name").value = item.name;
   document.getElementById("menu-item-price").value = item.price;
   document.getElementById("menu-item-category").value = item.category;
-  document.getElementById("menu-item-image").value = item.image || "";
+  document.getElementById("menu-item-image").value = item.image.startsWith("data:image") ? "" : item.image;
   document.getElementById("menu-item-desc").value = item.desc || "";
   document.getElementById("menu-item-instock").checked = item.inStock !== false;
+
+  currentUploadedImageBase64 = item.image.startsWith("data:image") ? item.image : "";
+  if (item.image) {
+    document.getElementById("item-image-preview").src = item.image;
+    document.getElementById("item-image-preview-container").classList.remove("hidden");
+  }
 
   document.getElementById("menu-form-heading").innerHTML = `<i class="fa-solid fa-pen text-blue-400"></i> Edit Item: ${item.name}`;
   document.getElementById("menu-submit-btn").innerText = "Update Item";
   document.getElementById("cancel-menu-edit-btn").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function resetMenuForm() {
   document.getElementById("menu-item-form").reset();
   document.getElementById("menu-item-id").value = "";
+  currentUploadedImageBase64 = "";
+  document.getElementById("item-image-preview-container").classList.add("hidden");
   document.getElementById("menu-form-heading").innerHTML = `<i class="fa-solid fa-circle-plus text-red-500"></i> Naya Item Add Karein`;
   document.getElementById("menu-submit-btn").innerText = "➕ Save Item to Menu";
   document.getElementById("cancel-menu-edit-btn").classList.add("hidden");
@@ -451,7 +520,7 @@ function toggleMenuStock(id) {
   }
 }
 
-// ---------------- TAB 3: TOP 6 SLIDES ----------------
+// ---------------- TAB 3: TOP 6 SLIDES WITH DIRECT UPLOAD ----------------
 function renderAdminBanners() {
   const container = document.getElementById("admin-banners-grid");
   if (!container) return;
@@ -459,17 +528,31 @@ function renderAdminBanners() {
   container.innerHTML = siteConfig.banners.map((b, idx) => `
     <div class="bg-slate-800/80 rounded-2xl border border-slate-700 overflow-hidden flex flex-col justify-between">
       <div class="relative h-36">
-        <img src="${b.image}" class="w-full h-full object-cover" alt="${b.title}">
+        <img id="banner-preview-${b.id}" src="${b.image}" class="w-full h-full object-cover" alt="${b.title}">
         <span class="absolute top-2 left-2 px-2 py-0.5 bg-black/70 text-amber-400 rounded-md text-[10px] font-bold">Slide #${idx + 1}</span>
       </div>
       <div class="p-4 space-y-2">
         <input type="text" value="${b.badge || ''}" onchange="updateBannerField('${b.id}', 'badge', this.value)" placeholder="Badge (Ex: Special 🍕)" class="w-full px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-white">
         <input type="text" value="${b.title}" onchange="updateBannerField('${b.id}', 'title', this.value)" placeholder="Slide Title" class="w-full px-2.5 py-1.5 text-xs font-bold bg-slate-900 border border-slate-700 rounded-lg text-white">
         <input type="text" value="${b.subtitle || ''}" onchange="updateBannerField('${b.id}', 'subtitle', this.value)" placeholder="Slide Subtitle" class="w-full px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-300">
-        <input type="url" value="${b.image}" onchange="updateBannerField('${b.id}', 'image', this.value)" placeholder="Image URL" class="w-full px-2.5 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-blue-400">
+        
+        <div class="pt-1">
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Upload Slide Image from Device:</label>
+          <input type="file" accept="image/*" onchange="handleBannerFileUpload('${b.id}', event)" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700">
+        </div>
       </div>
     </div>
   `).join("");
+}
+
+async function handleBannerFileUpload(id, e) {
+  const file = e.target.files[0];
+  if (file) {
+    const base64 = await fileToBase64(file);
+    updateBannerField(id, 'image', base64);
+    const imgEl = document.getElementById(`banner-preview-${id}`);
+    if (imgEl) imgEl.src = base64;
+  }
 }
 
 function updateBannerField(id, field, val) {
@@ -513,32 +596,50 @@ function deleteCustomerReview(id) {
   }
 }
 
-// ---------------- TAB 5: UPI, SETTINGS & PASSWORD ----------------
+// ---------------- TAB 5: UPI, QR UPLOAD, PHONE & SETTINGS ----------------
 function populateSettingsForms() {
+  siteConfig = getSiteConfig();
   document.getElementById("setting-upi-id").value = siteConfig.upiId || "7667610195@upi";
-  document.getElementById("setting-custom-qr").value = siteConfig.customQrUrl || "";
   document.getElementById("setting-phone").value = siteConfig.phone || "917667610195";
   document.getElementById("setting-instagram").value = siteConfig.instagramUrl || "";
   document.getElementById("setting-announcement").value = siteConfig.announcement || "";
+  
+  if (siteConfig.customQrUrl) {
+    document.getElementById("custom-qr-preview").src = siteConfig.customQrUrl;
+    document.getElementById("custom-qr-preview-container").classList.remove("hidden");
+  }
+}
+
+async function handleQrFileUpload(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const base64 = await fileToBase64(file);
+    siteConfig.customQrUrl = base64;
+    document.getElementById("custom-qr-preview").src = base64;
+    document.getElementById("custom-qr-preview-container").classList.remove("hidden");
+    saveSiteConfig(siteConfig);
+    alert("Shop QR Code Photo upload ho gayi!");
+  }
 }
 
 function handleSaveUpiSettings(e) {
   e.preventDefault();
   siteConfig.upiId = document.getElementById("setting-upi-id").value.trim();
-  siteConfig.customQrUrl = document.getElementById("setting-custom-qr").value.trim();
-
   saveSiteConfig(siteConfig);
-  alert("UPI & QR Settings update ho gayi!");
+  alert("UPI Settings save ho gayi!");
 }
 
 function handleSaveContactSettings(e) {
   e.preventDefault();
-  siteConfig.phone = document.getElementById("setting-phone").value.trim();
+  const rawPhone = document.getElementById("setting-phone").value.trim();
+  const cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+
+  siteConfig.phone = cleanPhone;
   siteConfig.instagramUrl = document.getElementById("setting-instagram").value.trim();
   siteConfig.announcement = document.getElementById("setting-announcement").value.trim();
 
   saveSiteConfig(siteConfig);
-  alert("Contacts, Instagram & Announcement update ho gayi!");
+  alert(`Store Phone number (+${cleanPhone}) aur Social Links update ho gaye! Ab sabhi orders naye number par jayenge.`);
 }
 
 async function handleChangePassword(e) {
@@ -546,7 +647,7 @@ async function handleChangePassword(e) {
   const curr = document.getElementById("curr-pass").value.trim();
   const next = document.getElementById("new-pass").value.trim();
 
-  const currentSavedHash = localStorage.getItem("slice_admin_hash_v3") || DEFAULT_HASH;
+  const currentSavedHash = localStorage.getItem("slice_admin_hash_v4") || DEFAULT_HASH;
   const currHash = await hashSHA256(curr);
 
   if (curr !== "admin1234" && currHash !== currentSavedHash && currHash !== DEFAULT_HASH) {
@@ -555,7 +656,7 @@ async function handleChangePassword(e) {
   }
 
   const newHash = await hashSHA256(next);
-  localStorage.setItem("slice_admin_hash_v3", newHash);
+  localStorage.setItem("slice_admin_hash_v4", newHash);
   e.target.reset();
   alert("Master Admin Password update ho gaya!");
 }

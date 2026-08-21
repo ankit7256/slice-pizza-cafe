@@ -1,4 +1,4 @@
-// Slice Pizza & Cafe - Frontend & WhatsApp Ordering Logic (V3)
+// Slice Pizza & Cafe - Customer Storefront Logic (V4)
 let siteConfig = {};
 let cart = [];
 let activeCategory = "All";
@@ -7,6 +7,7 @@ let currentSlideIndex = 0;
 let slideInterval = null;
 let pendingWhatsAppMessage = "";
 let lastGeneratedOrderId = "";
+let detectedUserLocation = "";
 
 document.addEventListener("DOMContentLoaded", () => {
   siteConfig = getSiteConfig();
@@ -17,13 +18,28 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMenu();
   loadCartFromStorage();
   updateCartUI();
+
+  // Listen for admin config updates in realtime
+  try {
+    const bc = new BroadcastChannel("slice_sync_channel");
+    bc.onmessage = (ev) => {
+      if (ev.data && ev.data.type === "CONFIG_UPDATED") {
+        siteConfig = getSiteConfig();
+        renderAnnouncement();
+        applySocialAndBrandLinks();
+        renderCategories();
+        renderMenu();
+      }
+    };
+  } catch(e) {}
 });
 
 function renderAnnouncement() {
   const bar = document.getElementById("announcement-bar");
   const topPhone = document.getElementById("top-phone-display");
   if (bar && siteConfig.announcement) {
-    bar.querySelector("span:first-child").innerText = siteConfig.announcement;
+    const txt = bar.querySelector("span:first-child");
+    if (txt) txt.innerText = siteConfig.announcement;
   }
   if (topPhone) {
     topPhone.innerHTML = `<i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +${siteConfig.phone || '917667610195'}`;
@@ -36,10 +52,12 @@ function applySocialAndBrandLinks() {
   const footerWa = document.getElementById("footer-whatsapp-link");
   const footerPhone = document.getElementById("footer-phone-display");
 
+  const cleanPhone = (siteConfig.phone || '917667610195').replace(/[^0-9]/g, '');
+
   if (navInsta) navInsta.href = siteConfig.instagramUrl || "https://instagram.com/";
   if (footerInsta) footerInsta.href = siteConfig.instagramUrl || "https://instagram.com/";
-  if (footerWa) footerWa.href = `https://wa.me/${siteConfig.phone || '917667610195'}`;
-  if (footerPhone) footerPhone.innerText = `+${siteConfig.phone || '917667610195'}`;
+  if (footerWa) footerWa.href = `https://wa.me/${cleanPhone}`;
+  if (footerPhone) footerPhone.innerText = `+${cleanPhone}`;
 }
 
 // ---------------- HERO AUTO SLIDER ----------------
@@ -158,7 +176,7 @@ function renderMenu() {
   const countDisplay = document.getElementById("items-count-display");
   if (!grid) return;
 
-  let filtered = siteConfig.menu.filter(item => {
+  let filtered = (siteConfig.menu || []).filter(item => {
     const matchCat = activeCategory === "All" || item.category === activeCategory;
     const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery) || (item.desc && item.desc.toLowerCase().includes(searchQuery));
     return matchCat && matchSearch;
@@ -183,7 +201,6 @@ function renderMenu() {
     return `
       <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group ${isOut ? 'opacity-60 grayscale' : ''}">
         
-        <!-- Image Click opens Detail Modal + Related Items -->
         <div onclick="openItemDetails('${item.id}')" class="relative overflow-hidden h-48 bg-gray-100 cursor-pointer">
           <img src="${item.image || 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600'}" 
                alt="${item.name}" 
@@ -240,7 +257,7 @@ function renderMenu() {
   }).join("");
 }
 
-// ---------------- ITEM DETAIL MODAL + RELATED ITEMS RECOMMENDER ----------------
+// ---------------- ITEM DETAIL MODAL + RELATED ITEMS ----------------
 function openItemDetails(id) {
   const item = siteConfig.menu.find(i => i.id === id);
   if (!item) return;
@@ -264,7 +281,6 @@ function openItemDetails(id) {
     </div>
   `;
 
-  // Find related items (Same category or popular sides)
   const related = siteConfig.menu.filter(i => i.id !== id && (i.category === item.category || i.category === "Snacks & Sides" || i.category === "Cafe & Shakes")).slice(0, 4);
 
   relatedGrid.innerHTML = related.map(rel => `
@@ -398,25 +414,57 @@ function toggleCartModal(show) {
 function handleOrderTypeChange(val) {
   const label = document.getElementById("address-label");
   const textarea = document.getElementById("cust-address");
+  const locBtn = document.getElementById("get-location-btn");
+
   if (val === "Dine-in") {
     label.innerText = "Table Number *";
     textarea.placeholder = "Table No. 1, 2, 3...";
+    if (locBtn) locBtn.classList.add("hidden");
   } else if (val === "Takeaway") {
     label.innerText = "Pickup Instructions / Notes";
     textarea.placeholder = "Parcel time, no onions, extra oregano etc...";
+    if (locBtn) locBtn.classList.add("hidden");
   } else {
     label.innerText = "Delivery Address *";
     textarea.placeholder = "House no, Building, Street, Landmark...";
+    if (locBtn) locBtn.classList.remove("hidden");
   }
 }
 
-// ---------------- PLACE ORDER, RECORD TO ADMIN QUEUE & DISPATCH ----------------
+// ---------------- LIVE LOCATION FETCHER ----------------
+function fetchCurrentLiveLocation() {
+  const statusEl = document.getElementById("location-status-text");
+  if (!navigator.geolocation) {
+    alert("Aapka browser geolocation support nahi karta.");
+    return;
+  }
+
+  statusEl.innerText = "Fetching GPS coordinates... 📍";
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+      detectedUserLocation = mapsUrl;
+      statusEl.innerHTML = `<span class="text-green-600 font-bold">✅ Live Location Captured! (WhatsApp par maps link jayega)</span>`;
+      showToast("Live Location Captured Successfully! 📍");
+    },
+    (err) => {
+      statusEl.innerHTML = `<span class="text-amber-600 font-bold">⚠️ GPS permission deny ho gayi. Aap WhatsApp chat par direct live location share kar sakte hain.</span>`;
+    }
+  );
+}
+
+// ---------------- PLACE ORDER & SYNC TO ADMIN ----------------
 function handlePlaceOrder(e) {
   e.preventDefault();
   if (cart.length === 0) {
     alert("Pehle cart me items add karein!");
     return;
   }
+
+  // Refresh latest config
+  siteConfig = getSiteConfig();
 
   const name = document.getElementById("cust-name").value.trim();
   const phone = document.getElementById("cust-phone").value.trim();
@@ -429,7 +477,7 @@ function handlePlaceOrder(e) {
   const orderId = "ORD" + Math.floor(100000 + Math.random() * 900000);
   lastGeneratedOrderId = orderId;
 
-  // Save to Master Orders List (For Admin and Track page)
+  // Save to Master Orders List
   const newOrder = {
     id: orderId,
     name,
@@ -438,8 +486,9 @@ function handlePlaceOrder(e) {
     paymentMethod,
     address,
     email,
+    location: detectedUserLocation || "",
     total,
-    status: "Received", // Status flow: Received -> Preparing -> Out for Delivery -> Delivered
+    status: "Received",
     date: new Date().toLocaleString(),
     cart: [...cart],
     itemsSummary: cart.map(i => `${i.name} (${i.qty})`).join(", ")
@@ -449,17 +498,21 @@ function handlePlaceOrder(e) {
   existingOrders.unshift(newOrder);
   saveOrdersList(existingOrders);
 
-  // Store phone for auto track
   localStorage.setItem("slice_last_order_phone", phone);
 
-  // WhatsApp Message
-  let msg = `🍕 *NEW ORDER #${orderId} - ${siteConfig.shopName.toUpperCase()}* 🍕\n`;
+  // Construct Beautiful WhatsApp Message
+  let msg = `🍕 *NEW ORDER #${orderId} - ${(siteConfig.shopName || 'SLICE PIZZA & CAFE').toUpperCase()}* 🍕\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `🆔 *Order ID:* #${orderId}\n`;
   msg += `👤 *Customer:* ${name}\n`;
   msg += `📞 *Phone:* ${phone}\n`;
   msg += `🛵 *Type:* ${orderType}\n`;
   msg += `📍 *Address/Table:* ${address}\n`;
+  if (detectedUserLocation) {
+    msg += `🗺️ *Live GPS Location:* ${detectedUserLocation}\n`;
+  } else if (orderType === "Home Delivery") {
+    msg += `📍 _(Tip: Aap is WhatsApp chat par apni 'Live Location' bhi attach karke send kar sakte hain)_\n`;
+  }
   msg += `💳 *Payment:* ${paymentMethod}\n`;
   if (email) msg += `✉️ *Email:* ${email}\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
@@ -473,7 +526,7 @@ function handlePlaceOrder(e) {
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `💰 *TOTAL AMOUNT: ₹${total}*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `📍 Live Tracking Link: https://wa.me/${siteConfig.phone || '917667610195'}\n`;
+  msg += `⏱️ Time: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n`;
   msg += `_Order placed directly via website._`;
 
   pendingWhatsAppMessage = msg;
@@ -486,6 +539,7 @@ function handlePlaceOrder(e) {
 }
 
 function openUpiModal(amount) {
+  siteConfig = getSiteConfig();
   const modal = document.getElementById("upi-modal");
   const amountDisplay = document.getElementById("upi-amount-display");
   const qrImg = document.getElementById("upi-qr-image");
@@ -495,7 +549,6 @@ function openUpiModal(amount) {
   amountDisplay.innerText = amount;
   if (upiIdDisplay) upiIdDisplay.innerText = `UPI ID: ${upiId}`;
 
-  // If custom QR is provided in admin settings, use it, else generate dynamically
   if (siteConfig.customQrUrl && siteConfig.customQrUrl.trim() !== "") {
     qrImg.src = siteConfig.customQrUrl;
   } else {
@@ -518,11 +571,12 @@ function proceedToWhatsAppAfterPayment() {
 }
 
 function completeOrderProcess(message, orderObj) {
-  const targetPhone = siteConfig.phone || "917667610195";
+  siteConfig = getSiteConfig();
+  const cleanPhone = (siteConfig.phone || "917667610195").replace(/[^0-9]/g, '');
+  const targetPhone = cleanPhone.startsWith("91") ? cleanPhone : "91" + cleanPhone;
   const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
 
-  // Show Invoice Bill to customer
   if (orderObj) {
     showInvoiceModal(orderObj);
   }
@@ -532,7 +586,7 @@ function completeOrderProcess(message, orderObj) {
   updateCartUI();
   renderMenu();
   toggleCartModal(false);
-  showToast("Order Placed Successfully! Kitchen notified 🚀");
+  showToast("Order Placed! Kitchen notified 🚀");
 }
 
 function showInvoiceModal(order) {
@@ -542,7 +596,7 @@ function showInvoiceModal(order) {
 
   placeholder.innerHTML = `
     <div class="text-center pb-3 border-b border-dashed border-gray-300">
-      <h3 class="text-2xl font-black text-gray-900">🍕 ${siteConfig.shopName}</h3>
+      <h3 class="text-2xl font-black text-gray-900">🍕 ${siteConfig.shopName || 'Slice Pizza & Cafe'}</h3>
       <p class="text-xs text-gray-500">Official Kitchen Order Invoice</p>
       <span class="inline-block mt-2 px-3 py-1 bg-red-100 text-red-700 text-xs font-black rounded-full">Order ID: #${order.id}</span>
     </div>
@@ -552,6 +606,7 @@ function showInvoiceModal(order) {
       <div class="flex justify-between"><span>Phone:</span> <strong>${order.phone}</strong></div>
       <div class="flex justify-between"><span>Type:</span> <strong>${order.orderType}</strong></div>
       <div class="flex justify-between"><span>Address:</span> <span>${order.address}</span></div>
+      ${order.location ? `<div class="flex justify-between"><span>GPS Link:</span> <a href="${order.location}" target="_blank" class="text-blue-600 underline font-bold">Open Map</a></div>` : ''}
       <div class="flex justify-between"><span>Payment:</span> <strong>${order.paymentMethod}</strong></div>
       <div class="flex justify-between"><span>Date:</span> <span>${order.date}</span></div>
     </div>

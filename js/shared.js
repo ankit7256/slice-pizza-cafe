@@ -1,10 +1,14 @@
-// Slice Pizza & Cafe - Master Data & Shared State (V3)
+// Slice Pizza & Cafe - Master Shared State & Realtime Bus (V4)
+const CONFIG_KEY = "slice_site_config_v4";
+const ORDERS_KEY = "slice_orders_list_v4";
+const ORDER_NOTIFY_EVENT = "slice_new_order_event";
+
 const DEFAULT_SITE_CONFIG = {
   shopName: "Slice Pizza & Cafe",
   phone: "917667610195",
   announcement: "🔥 Freshly Baked Hand-Tossed Pizzas & Cafe Specials! Free Delivery on all local orders!",
   upiId: "7667610195@upi",
-  customQrUrl: "", // Optional custom QR image URL
+  customQrUrl: "",
   instagramUrl: "https://instagram.com/",
   facebookUrl: "https://facebook.com/",
   categories: ["Veg Pizza", "Non-Veg Pizza", "Burgers", "Cafe & Shakes", "Snacks & Sides"],
@@ -132,7 +136,7 @@ const DEFAULT_SITE_CONFIG = {
       name: "Rohan Verma",
       role: "Patna Resident",
       rating: 5,
-      comment: "Best pizza in town! The cheese burst crust and Farmhouse toppings are always fresh and piping hot. WhatsApp order & live tracking was super smooth.",
+      comment: "Best pizza in town! The cheese burst crust and Farmhouse toppings are always fresh and piping hot.",
       image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
     },
     {
@@ -140,21 +144,13 @@ const DEFAULT_SITE_CONFIG = {
       name: "Pooja Singh",
       role: "Cafe Regular",
       rating: 5,
-      comment: "Cold coffee with ice cream is out of this world! Perfect place for evening hangout with friends. 10/10 recommended.",
+      comment: "Cold coffee with ice cream is out of this world! Perfect place for evening hangout.",
       image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80"
-    },
-    {
-      id: "c3",
-      name: "Amit Patel",
-      role: "Foodie",
-      rating: 5,
-      comment: "Veg Maharaja Burger & Garlic Breadsticks are pure love. Very affordable pricing and packaging is top notch.",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80"
     }
   ]
 };
 
-// SHA-256 for secure hashing
+// SHA-256 Utility
 async function hashSHA256(text) {
   const msgBuffer = new TextEncoder().encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -162,27 +158,34 @@ async function hashSHA256(text) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Config Storage
+// Config Get/Set
 function getSiteConfig() {
-  const saved = localStorage.getItem("slice_site_config_v3");
+  const saved = localStorage.getItem(CONFIG_KEY);
   if (saved) {
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Merge with default so missing keys don't break
+      return { ...DEFAULT_SITE_CONFIG, ...parsed };
     } catch(e) {
       return DEFAULT_SITE_CONFIG;
     }
   }
-  localStorage.setItem("slice_site_config_v3", JSON.stringify(DEFAULT_SITE_CONFIG));
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(DEFAULT_SITE_CONFIG));
   return DEFAULT_SITE_CONFIG;
 }
 
 function saveSiteConfig(config) {
-  localStorage.setItem("slice_site_config_v3", JSON.stringify(config));
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  // Broadcast config update to all tabs
+  try {
+    const bc = new BroadcastChannel("slice_sync_channel");
+    bc.postMessage({ type: "CONFIG_UPDATED", config });
+  } catch(e) {}
 }
 
-// Orders Storage
+// Orders Get/Set
 function getAllOrders() {
-  const saved = localStorage.getItem("slice_orders_list_v3");
+  const saved = localStorage.getItem(ORDERS_KEY);
   if (saved) {
     try {
       return JSON.parse(saved);
@@ -194,39 +197,52 @@ function getAllOrders() {
 }
 
 function saveOrdersList(orders) {
-  localStorage.setItem("slice_orders_list_v3", JSON.stringify(orders));
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+  // Broadcast new order to Admin tab immediately
+  try {
+    const bc = new BroadcastChannel("slice_sync_channel");
+    bc.postMessage({ type: "ORDER_PLACED", orders });
+  } catch(e) {}
 }
 
-// Play Modern Kitchen Bell Audio Notification
+// Audio Chime Player
 function playOrderNotificationSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
 
-    // Chime 1
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
     osc1.frequency.setValueAtTime(587.33, now); // D5
-    gain1.gain.setValueAtTime(0.3, now);
+    gain1.gain.setValueAtTime(0.4, now);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
     osc1.connect(gain1);
     gain1.connect(ctx.destination);
     osc1.start(now);
     osc1.stop(now + 0.5);
 
-    // Chime 2
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(880, now + 0.15); // A5
-    gain2.gain.setValueAtTime(0.4, now + 0.15);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+    osc2.frequency.setValueAtTime(880, now + 0.18); // A5
+    gain2.gain.setValueAtTime(0.5, now + 0.18);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
-    osc2.start(now + 0.15);
-    osc2.stop(now + 0.9);
+    osc2.start(now + 0.18);
+    osc2.stop(now + 1.0);
   } catch (e) {
-    console.log("Audio alert playback blocked or unsupported.");
+    console.log("Audio notification chime error:", e);
   }
+}
+
+// Helper: Convert File to compressed Base64 Data URL
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
 }

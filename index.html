@@ -18,7 +18,7 @@
     <span class="hidden md:inline" id="top-phone-display"><i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +91 7667610195</span>
   </div>
 
-  <!-- Navbar (Admin Button completely removed from public UI) -->
+  <!-- Navbar (Admin Link Hidden from public) -->
   <nav class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-gray-100 shadow-sm transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
@@ -77,16 +77,15 @@
     <a href="policy.html">Policy</a>
   </div>
 
-  <!-- HERO SLIDER SECTION (Auto-sliding 5-6 slides) -->
+  <!-- HERO SLIDER SECTION (Auto 6 slides) -->
   <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
     <div class="relative overflow-hidden rounded-3xl shadow-2xl bg-gray-900 min-h-[380px] sm:min-h-[460px] md:min-h-[500px] flex items-center">
       
-      <!-- Slide Track -->
       <div id="hero-slider-track" class="w-full h-full relative">
         <!-- Injected via JS -->
       </div>
 
-      <!-- Slider Controls (Prev / Next) -->
+      <!-- Controls -->
       <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/40 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center transition border border-white/20 z-20">
         <i class="fa-solid fa-chevron-left text-sm"></i>
       </button>
@@ -94,30 +93,10 @@
         <i class="fa-solid fa-chevron-right text-sm"></i>
       </button>
 
-      <!-- Dots Indicators -->
       <div id="slider-dots" class="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
         <!-- Injected via JS -->
       </div>
 
-    </div>
-  </section>
-
-  <!-- Live Order Tracker Quick Banner -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-    <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
-      <div class="flex items-center gap-3 text-center sm:text-left">
-        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
-          <i class="fa-solid fa-truck-ramp-box"></i>
-        </div>
-        <div>
-          <h4 class="font-black text-sm sm:text-base">Track Your Live Order Status</h4>
-          <p class="text-xs text-amber-100">Check if your pizza is Preparing, Out for Delivery, or Ready!</p>
-        </div>
-      </div>
-      <a href="track.html" class="whitespace-nowrap px-5 py-2.5 bg-white text-gray-900 hover:bg-amber-100 rounded-xl text-xs font-black shadow transition flex items-center gap-2">
-        <span>Open Tracking System</span>
-        <i class="fa-solid fa-chevron-right text-[10px]"></i>
-      </a>
     </div>
   </section>
 
@@ -157,19 +136,17 @@
     </div>
   </main>
 
-  <!-- ================= ITEM DETAILS & RELATED ITEMS MODAL ================= -->
+  <!-- ITEM DETAIL & RELATED MODAL -->
   <div id="item-details-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative p-6 space-y-6">
       <button onclick="closeItemModal()" class="absolute right-5 top-5 text-gray-400 hover:text-gray-700 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center z-10">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
-      <!-- Selected Item Detail Box -->
       <div id="selected-item-view">
         <!-- Injected via JS -->
       </div>
 
-      <!-- RELATED ITEMS SECTION (Recommendation Engine) -->
       <div class="border-t border-gray-100 pt-5 space-y-3">
         <div class="flex items-center gap-2">
           <span class="text-red-600 text-lg">✨</span>
@@ -189,7 +166,6 @@
     <div class="fixed inset-y-0 right-0 max-w-full flex">
       <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col">
         
-        <!-- Cart Header -->
         <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50">
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold">
@@ -205,14 +181,11 @@
           </button>
         </div>
 
-        <!-- Cart Items List -->
         <div id="cart-items-container" class="flex-1 overflow-y-auto p-5 space-y-4">
           <!-- Injected via JS -->
         </div>
 
-        <!-- Cart Footer & Form -->
         <div class="p-5 border-t border-gray-100 bg-white shadow-lg space-y-4">
-          
           <div class="space-y-1.5 text-sm">
             <div class="flex justify-between text-gray-600">
               <span>Item Total</span>
@@ -228,7 +201,7 @@
             </div>
           </div>
 
-          <!-- Checkout Form -->
+          <!-- Checkout Form with Live Location Button -->
           <form id="order-checkout-form" onsubmit="handlePlaceOrder(event)" class="space-y-3 pt-2">
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Aapka Naam *</label>
@@ -260,11 +233,17 @@
             </div>
 
             <div>
-              <label id="address-label" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Delivery Address *</label>
+              <div class="flex justify-between items-center mb-1">
+                <label id="address-label" class="block text-xs font-bold uppercase tracking-wider text-gray-600">Delivery Address *</label>
+                <button type="button" id="get-location-btn" onclick="fetchCurrentLiveLocation()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-location-crosshairs text-red-500"></i> Share Live Location
+                </button>
+              </div>
               <textarea id="cust-address" required rows="2" placeholder="House no, Street, Landmark..." class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500"></textarea>
+              <p id="location-status-text" class="text-[11px] text-gray-500 mt-1"></p>
             </div>
 
-            <!-- Email Notification (Optional field) -->
+            <!-- Email (Optional) -->
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Email ID (Receipt ke liye - Optional)</label>
               <input type="email" id="cust-email" placeholder="apna-email@gmail.com" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -309,7 +288,7 @@
     </div>
   </div>
 
-  <!-- ================= INVOICE BILL MODAL (For Customer & Print) ================= -->
+  <!-- INVOICE BILL MODAL -->
   <div id="invoice-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto" id="printable-invoice">
       <button onclick="closeInvoiceModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 print:hidden">
@@ -342,7 +321,7 @@
     </button>
   </div>
 
-  <!-- Footer (Admin link completely removed from public UI) -->
+  <!-- Footer -->
   <footer class="bg-gray-900 text-white mt-20 border-t border-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -357,7 +336,6 @@
           <p class="text-gray-400 text-xs sm:text-sm leading-relaxed">
             Aapka pasandida pizza, burger aur cafe drinks outlet. Authentic fresh base aur premium ingredients se bana har ek bite me mazedar taste.
           </p>
-          <!-- Social Icons -->
           <div class="flex items-center gap-3 mt-4">
             <a id="footer-instagram-link" href="#" target="_blank" class="w-9 h-9 rounded-xl bg-gray-800 hover:bg-pink-600 text-white flex items-center justify-center transition">
               <i class="fa-brands fa-instagram"></i>

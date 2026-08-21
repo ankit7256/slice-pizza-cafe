@@ -49,7 +49,6 @@
       <h1 class="text-3xl sm:text-4xl font-black text-gray-950">Aapka Order Kahan Tak Pahuncha?</h1>
       <p class="text-gray-600 text-sm">Apna 10-Digit Mobile Number ya Order ID enter karein aur live status dekhein.</p>
 
-      <!-- Search Box -->
       <div class="max-w-md mx-auto pt-4 flex gap-2">
         <input type="text" id="track-search-input" placeholder="Enter Mobile No (Ex: 9876543210)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm">
         <button onclick="searchOrderStatus()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-2xl shadow transition">
@@ -69,7 +68,6 @@
   <script src="js/shared.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Auto check last order from localStorage
       const lastOrderPhone = localStorage.getItem("slice_last_order_phone");
       if (lastOrderPhone) {
         document.getElementById("track-search-input").value = lastOrderPhone;
@@ -128,7 +126,6 @@
             </div>
           </div>
 
-          <!-- Progress Stepper Bar -->
           <div class="py-4">
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Current Order Progress:</p>
             <div class="grid grid-cols-4 gap-2 text-center relative">
@@ -147,7 +144,6 @@
             </div>
           </div>
 
-          <!-- Order Summary -->
           <div class="bg-gray-50 p-4 rounded-2xl space-y-2 text-xs">
             <p class="font-bold text-gray-800">Items: ${order.itemsSummary || 'Pizza & Cafe Items'}</p>
             <p class="text-gray-600"><i class="fa-solid fa-location-dot text-red-500 mr-1"></i> Address/Table: ${order.address}</p>
@@ -205,7 +201,6 @@
           <p><strong>Payment Mode:</strong> ${order.paymentMethod}</p>
           <div class="footer">
             <p>Thank You For Ordering with Slice Pizza & Cafe!</p>
-            <p>WhatsApp Support: +91 7667610195</p>
           </div>
         </body>
         </html>
