@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slice Master Control Room - Admin V6</title>
+  <title>Slice Master Control Room - Admin Control (V7)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,277 +11,268 @@
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased min-h-screen">
 
-  <!-- Secret Login Screen -->
   <div id="auth-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl relative">
-      <div class="w-16 h-16 bg-gradient-to-tr from-red-600 to-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-lg">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl relative overflow-hidden">
+      <div class="w-16 h-16 bg-gradient-to-tr from-red-600 to-amber-500 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4 shadow-lg shadow-red-500/20">
         <i class="fa-solid fa-shield-halved"></i>
       </div>
       <h2 class="text-2xl font-black text-white">Slice Master Control</h2>
-      <p class="text-xs text-slate-400 mt-1 mb-6">Cloud Realtime Sync Active</p>
+      <p class="text-xs text-slate-400 mt-1 mb-6">Kitchen Live Orders & Store Management Hub</p>
+      
+      <div id="lockout-banner" class="hidden p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-xs font-bold mb-4">
+        ⚠️ Too many failed attempts. Locked for <span id="lockout-timer">30</span>s.
+      </div>
 
       <form id="login-form" onsubmit="handleSecureLogin(event)" class="space-y-4">
-        <input type="password" id="admin-pass-input" placeholder="Enter Admin Password" required autofocus class="w-full text-center tracking-wider text-lg font-bold py-3.5 bg-slate-800 border border-slate-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-red-500">
-        <button type="submit" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-lg transition">
-          🔐 Unlock Dashboard
+        <input type="password" id="admin-pass-input" placeholder="Enter Admin Password" required autofocus class="w-full text-center tracking-wider text-lg font-bold py-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl text-white focus:bg-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none">
+        <button type="submit" id="login-btn" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 transition">
+          🔐 Access Master Dashboard
         </button>
       </form>
-      <a href="index.html" class="inline-block mt-4 text-xs text-amber-400 hover:underline">← Go to Pizza Store</a>
+
+      <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
+        <a href="index.html" class="text-amber-400 hover:underline">← Back to Pizza Store</a>
+      </div>
     </div>
   </div>
 
-  <!-- Main Dashboard -->
-  <div id="dashboard-screen" class="hidden min-h-screen flex flex-col">
+  <div id="dashboard-screen" class="hidden min-h-screen flex flex-col bg-slate-950 text-slate-200">
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold text-xl">🍕</div>
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+            <i class="fa-solid fa-pizza-slice"></i>
+          </div>
           <div>
-            <h1 class="text-lg font-bold text-white flex items-center gap-2">
-              Slice Control Center <span class="px-2 py-0.5 bg-green-500/20 text-green-400 border border-green-500/30 text-[10px] font-black uppercase rounded">Cloud Live</span>
+            <h1 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+              Slice Control Center <span class="px-2 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 rounded-md text-[10px] font-black uppercase">Live Cloud</span>
             </h1>
-            <p class="text-xs text-slate-400">Har customer ke phone me direct live sync hota hai</p>
+            <p class="text-xs text-slate-400">Orders, Customizations, Slides & Store Configuration</p>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
-          <button onclick="publishChangesToCloud()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-black rounded-xl shadow transition flex items-center gap-1.5 border border-green-400">
+          <button onclick="publishAllChangesLive()" class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-lg transition flex items-center gap-1.5 border border-green-400">
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span>Save & Publish Live</span>
           </button>
-          <a href="index.html" target="_blank" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700">View Store</a>
-          <button onclick="sessionStorage.removeItem('slice_auth_v6'); window.location.reload();" class="p-2 text-red-400 hover:bg-slate-800 rounded-xl"><i class="fa-solid fa-power-off"></i></button>
+          <a href="index.html" target="_blank" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700 flex items-center gap-1">
+            <i class="fa-solid fa-arrow-up-right-from-square text-amber-400"></i>
+            <span class="hidden sm:inline">View Store</span>
+          </a>
+          <button onclick="handleAdminLogout()" class="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-red-500/30">
+            <i class="fa-solid fa-power-off"></i>
+          </button>
         </div>
       </div>
     </header>
 
-    <!-- Tabs -->
-    <div class="bg-slate-900/60 border-b border-slate-800 py-2.5 px-4">
-      <div class="max-w-7xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
-        <button onclick="switchTab('tab-orders')" id="btn-tab-orders" class="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 text-white flex items-center gap-2">
-          <i class="fa-solid fa-bell animate-bounce"></i> <span>Live Orders (<span id="orders-count-badge">0</span>)</span>
+    <div class="bg-slate-900/60 border-b border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto no-scrollbar py-2.5">
+        <button onclick="switchTab('tab-orders')" id="btn-tab-orders" class="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 text-white flex items-center gap-2 shadow-lg">
+          <i class="fa-solid fa-bell animate-bounce"></i> <span>1. Live Orders (<span id="tab-count-orders">0</span>)</span>
         </button>
         <button onclick="switchTab('tab-menu')" id="btn-tab-menu" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-          <i class="fa-solid fa-pizza-slice"></i> <span>Menu & Price Editor</span>
+          <i class="fa-solid fa-pizza-slice"></i> <span>2. Menu & Prices</span>
+        </button>
+        <button onclick="switchTab('tab-banners')" id="btn-tab-banners" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
+          <i class="fa-solid fa-images"></i> <span>3. Home Slider</span>
         </button>
         <button onclick="switchTab('tab-settings')" id="btn-tab-settings" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2">
-          <i class="fa-solid fa-gear"></i> <span>Phone & UPI Settings</span>
+          <i class="fa-solid fa-gear"></i> <span>4. Phone, UPI & QR</span>
         </button>
       </div>
     </div>
 
-    <!-- Content -->
-    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
-      <!-- Orders Tab -->
-      <div id="tab-orders" class="space-y-4">
-        <h3 class="text-xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-bell text-red-500 animate-pulse"></i> Incoming Customer Orders (Auto-Updating)
-        </h3>
-        <div id="orders-list-container" class="space-y-4"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+      <div id="tab-orders" class="tab-content space-y-6">
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+            <div>
+              <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-bell text-red-500 animate-pulse"></i> Live Incoming Orders
+              </h3>
+              <p class="text-xs text-slate-400">Realtime customer orders appear here with audio chime and exact GPS map location.</p>
+            </div>
+            <button onclick="clearCompletedOrders()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+              Clear Completed
+            </button>
+          </div>
+          <div id="admin-orders-list-container" class="space-y-4"></div>
+        </div>
       </div>
 
-      <!-- Menu Tab -->
-      <div id="tab-menu" class="hidden space-y-6">
+      <div id="tab-menu" class="tab-content hidden space-y-6">
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-tags text-amber-400"></i> Categories
+          </h3>
+          <div class="flex flex-wrap gap-2 items-center" id="admin-categories-tags"></div>
+          <div class="flex gap-2 max-w-md pt-2">
+            <input type="text" id="new-category-input" placeholder="New Category (Ex: Pasta, Desserts)" class="flex-1 px-3.5 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+            <button onclick="addNewCategory()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold text-xs rounded-xl shadow">
+              ➕ Add Category
+            </button>
+          </div>
+        </div>
+
         <div class="grid lg:grid-cols-12 gap-8">
-          <div class="lg:col-span-5 bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
-            <h4 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-red-500"></i> Add / Edit Pizza Item</h4>
-            <form onsubmit="handleSaveMenuItem(event)" class="space-y-3">
-              <input type="hidden" id="item-id">
-              <input type="text" id="item-name" placeholder="Item Name (e.g. Farmhouse Loaded)" required class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
-              <div class="grid grid-cols-2 gap-2">
-                <input type="number" id="item-price" placeholder="Price (₹)" required class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
-                <select id="item-category" class="w-full px-3 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white"></select>
+          <div class="lg:col-span-5">
+            <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl sticky top-28 space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-white flex items-center gap-2" id="menu-form-heading">
+                  <i class="fa-solid fa-circle-plus text-red-500"></i> Add / Edit Item
+                </h2>
+                <button id="cancel-menu-edit-btn" onclick="resetMenuForm()" class="hidden text-xs text-slate-400 hover:text-slate-200 font-bold">Cancel</button>
               </div>
-              <input type="url" id="item-image" placeholder="Image URL" class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
-              <textarea id="item-desc" rows="2" placeholder="Description" class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white"></textarea>
-              <button type="submit" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition">Save to List</button>
-            </form>
+
+              <form id="menu-item-form" onsubmit="handleSaveMenuItem(event)" class="space-y-3.5">
+                <input type="hidden" id="menu-item-id">
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Item Name *</label>
+                  <input type="text" id="menu-item-name" required placeholder="Ex: Farmhouse Special Pizza" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Regular Price (₹) *</label>
+                    <input type="number" id="menu-item-price" required placeholder="249" min="0" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Category *</label>
+                    <select id="menu-item-category" class="w-full px-3 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none"></select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Medium Price (₹)</label>
+                    <input type="number" id="menu-item-price-med" placeholder="399" class="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Large Price (₹)</label>
+                    <input type="number" id="menu-item-price-large" placeholder="549" class="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none">
+                  </div>
+                </div>
+
+                <div class="space-y-2 p-3 bg-slate-800/60 rounded-2xl border border-slate-700">
+                  <label class="block text-xs font-bold uppercase text-amber-400">
+                    <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload Photo (Device Se):
+                  </label>
+                  <input type="file" id="menu-item-file-input" accept="image/*" onchange="handleImageFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer">
+                  <div id="item-image-preview-container" class="hidden pt-2 flex items-center gap-3">
+                    <img id="item-image-preview" src="" class="w-16 h-16 rounded-xl object-cover border border-slate-600" alt="Preview">
+                    <span class="text-xs text-green-400 font-bold">Photo Selected!</span>
+                  </div>
+                  <div class="pt-1">
+                    <span class="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Ya Photo URL dalein:</span>
+                    <input type="url" id="menu-item-image" placeholder="https://images.unsplash.com/..." class="w-full px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Description</label>
+                  <textarea id="menu-item-desc" rows="2" placeholder="Toppings, cheese, sauces..." class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700">
+                  <span class="text-xs font-bold text-slate-300">In-Stock:</span>
+                  <input type="checkbox" id="menu-item-instock" checked class="w-5 h-5 accent-green-600 rounded cursor-pointer">
+                </div>
+
+                <button type="submit" id="menu-submit-btn" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition">
+                  ➕ Save Item
+                </button>
+              </form>
+            </div>
           </div>
 
-          <div class="lg:col-span-7 bg-slate-900 p-6 rounded-3xl border border-slate-800">
-            <h4 class="font-bold text-white mb-4">Current Live Menu Items</h4>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm">
-                <thead>
-                  <tr class="text-xs uppercase text-slate-400 border-b border-slate-800">
-                    <th class="pb-3">Item</th>
-                    <th class="pb-3">Category</th>
-                    <th class="pb-3">Price</th>
-                    <th class="pb-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="admin-menu-table-body" class="divide-y divide-slate-800"></tbody>
-              </table>
+          <div class="lg:col-span-7 space-y-4">
+            <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+              <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+                <h3 class="font-bold text-white">Live Menu List</h3>
+                <span class="text-xs text-slate-400">Total: <strong class="text-amber-400" id="stat-menu-count">0</strong></span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead>
+                    <tr class="text-xs uppercase font-bold text-slate-400 border-b border-slate-800">
+                      <th class="pb-3">Item</th>
+                      <th class="pb-3">Category</th>
+                      <th class="pb-3">Price</th>
+                      <th class="pb-3">Stock</th>
+                      <th class="pb-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-menu-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Settings Tab -->
-      <div id="tab-settings" class="hidden bg-slate-900 p-6 rounded-3xl border border-slate-800 max-w-lg space-y-4">
-        <h4 class="font-bold text-white">Store Contacts & WhatsApp Number</h4>
-        <form onsubmit="handleSaveSettings(event)" class="space-y-3">
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">WhatsApp Receive Number</label>
-            <input type="text" id="setting-phone" required class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white font-mono">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">UPI ID for Online Payments</label>
-            <input type="text" id="setting-upi" required class="w-full px-3.5 py-2 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white font-mono">
-          </div>
-          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition">Update Settings</button>
-        </form>
+      <div id="tab-banners" class="tab-content hidden space-y-6">
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-images text-amber-400"></i> Manage Home Page Top Slides
+          </h3>
+          <div id="admin-banners-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
       </div>
-    </main>
+
+      <div id="tab-settings" class="tab-content hidden space-y-6">
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-brands fa-whatsapp text-green-500"></i> WhatsApp Order Number
+            </h3>
+            <form onsubmit="handleSaveContactSettings(event)" class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">WhatsApp Number *</label>
+                <input type="text" id="setting-phone" required placeholder="7256804904" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white font-mono font-bold">
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Instagram URL</label>
+                <input type="url" id="setting-instagram" placeholder="https://instagram.com/slicepizzacafe" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Top Announcement</label>
+                <input type="text" id="setting-announcement" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white">
+              </div>
+              <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition">
+                💾 Save Contacts
+              </button>
+            </form>
+          </div>
+
+          <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-qrcode text-green-400"></i> UPI ID & QR Code Image
+            </h3>
+            <form onsubmit="handleSaveUpiSettings(event)" class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">UPI ID *</label>
+                <input type="text" id="setting-upi-id" required placeholder="7256804904@upi" class="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white font-mono">
+              </div>
+              <div class="space-y-2 p-3 bg-slate-800/60 rounded-2xl border border-slate-700">
+                <label class="block text-xs font-bold uppercase text-amber-400">Upload Shop QR Photo:</label>
+                <input type="file" accept="image/*" onchange="handleQrFileUpload(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-600 file:text-white cursor-pointer">
+                <div id="custom-qr-preview-container" class="hidden pt-2">
+                  <img id="custom-qr-preview" src="" class="w-20 h-20 rounded-xl object-contain bg-white p-1 border" alt="QR Preview">
+                </div>
+              </div>
+              <button type="submit" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-xs transition">
+                💾 Save UPI
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="js/shared.js"></script>
-  <script>
-    let globalConfig = null;
-    let ordersPoll = null;
-    let lastOrdersCount = 0;
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      globalConfig = await fetchCloudConfig();
-      if (sessionStorage.getItem("slice_auth_v6") === "true") {
-        showDashboard();
-      }
-    });
-
-    function handleSecureLogin(e) {
-      e.preventDefault();
-      const p = document.getElementById("admin-pass-input").value.trim();
-      if (p === "admin1234") {
-        sessionStorage.setItem("slice_auth_v6", "true");
-        showDashboard();
-      } else {
-        alert("Galat Password! Default hai: admin1234");
-      }
-    }
-
-    function showDashboard() {
-      document.getElementById("auth-screen").classList.add("hidden");
-      document.getElementById("dashboard-screen").classList.remove("hidden");
-      renderCategoriesDropdown();
-      renderAdminMenuTable();
-      populateSettings();
-      startLiveOrderPolling();
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll("#tab-orders, #tab-menu, #tab-settings").forEach(el => el.classList.add("hidden"));
-      document.getElementById(tabId).classList.remove("hidden");
-      document.getElementById("btn-tab-orders").className = tabId === 'tab-orders' ? "px-4 py-2 rounded-xl text-xs font-bold bg-red-600 text-white flex items-center gap-2" : "px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2";
-      document.getElementById("btn-tab-menu").className = tabId === 'tab-menu' ? "px-4 py-2 rounded-xl text-xs font-bold bg-red-600 text-white flex items-center gap-2" : "px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2";
-      document.getElementById("btn-tab-settings").className = tabId === 'tab-settings' ? "px-4 py-2 rounded-xl text-xs font-bold bg-red-600 text-white flex items-center gap-2" : "px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center gap-2";
-    }
-
-    function renderCategoriesDropdown() {
-      const sel = document.getElementById("item-category");
-      sel.innerHTML = (globalConfig.categories || []).map(c => `<option value="${c}">${c}</option>`).join("");
-    }
-
-    function renderAdminMenuTable() {
-      const tbody = document.getElementById("admin-menu-table-body");
-      tbody.innerHTML = (globalConfig.menu || []).map(item => `
-        <tr class="hover:bg-slate-800/40">
-          <td class="py-3 pr-2 flex items-center gap-2">
-            <img src="${item.image}" class="w-9 h-9 rounded-lg object-cover">
-            <span class="font-bold text-white">${item.name}</span>
-          </td>
-          <td class="py-3 px-2 text-xs text-slate-300">${item.category}</td>
-          <td class="py-3 px-2 font-bold text-amber-400">₹${item.price}</td>
-          <td class="py-3 pl-2 text-right">
-            <button onclick="deleteMenuItem('${item.id}')" class="text-red-400 hover:text-red-300 p-1"><i class="fa-solid fa-trash"></i></button>
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    function handleSaveMenuItem(e) {
-      e.preventDefault();
-      const id = document.getElementById("item-id").value || "m_" + Date.now();
-      const name = document.getElementById("item-name").value.trim();
-      const price = parseFloat(document.getElementById("item-price").value);
-      const category = document.getElementById("item-category").value;
-      const image = document.getElementById("item-image").value.trim() || "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600";
-      const desc = document.getElementById("item-desc").value.trim();
-
-      const existingIdx = globalConfig.menu.findIndex(i => i.id === id);
-      if (existingIdx !== -1) {
-        globalConfig.menu[existingIdx] = { ...globalConfig.menu[existingIdx], name, price, category, image, desc };
-      } else {
-        globalConfig.menu.unshift({ id, name, price, category, image, desc, inStock: true });
-      }
-
-      renderAdminMenuTable();
-      e.target.reset();
-      document.getElementById("item-id").value = "";
-      alert("Item list me add ho gaya! Ab upar 'Save & Publish Live' button dabayein taaki sabhi phones me live ho sake.");
-    }
-
-    function deleteMenuItem(id) {
-      if (confirm("Is item ko delete karein?")) {
-        globalConfig.menu = globalConfig.menu.filter(i => i.id !== id);
-        renderAdminMenuTable();
-      }
-    }
-
-    function populateSettings() {
-      document.getElementById("setting-phone").value = globalConfig.phone || "917667610195";
-      document.getElementById("setting-upi").value = globalConfig.upiId || "7667610195@upi";
-    }
-
-    function handleSaveSettings(e) {
-      e.preventDefault();
-      globalConfig.phone = document.getElementById("setting-phone").value.trim().replace(/[^0-9]/g, '');
-      globalConfig.upiId = document.getElementById("setting-upi").value.trim();
-      alert("Settings updated! Ab 'Save & Publish Live' dabayein.");
-    }
-
-    async function publishChangesToCloud() {
-      await saveCloudConfig(globalConfig);
-      alert("🚀 BINGO! Aapka poora naya menu aur settings internet ke zariye sabhi customers ke phones par LIVE ho gaya hai!");
-    }
-
-    function startLiveOrderPolling() {
-      pollOrders();
-      if (ordersPoll) clearInterval(ordersPoll);
-      ordersPoll = setInterval(pollOrders, 3000);
-    }
-
-    async function pollOrders() {
-      const orders = await fetchCloudOrders();
-      document.getElementById("orders-count-badge").innerText = orders.length;
-
-      if (orders.length > lastOrdersCount && lastOrdersCount !== 0) {
-        playKitchenChime();
-        alert(`🔔 NAYA ORDER AAYA HAI! Total: ₹${orders[0].total}`);
-      }
-      lastOrdersCount = orders.length;
-
-      const container = document.getElementById("orders-list-container");
-      if (orders.length === 0) {
-        container.innerHTML = `<p class="text-sm text-slate-500 py-6 text-center">Abhi tak koi naya order nahi aaya.</p>`;
-        return;
-      }
-
-      container.innerHTML = orders.map(o => `
-        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
-          <div>
-            <span class="px-2 py-0.5 bg-red-600/20 text-red-400 border border-red-500/30 rounded text-xs font-bold">#${o.id}</span>
-            <h4 class="font-bold text-white text-base mt-1">${o.name} (${o.phone})</h4>
-            <p class="text-xs text-slate-400">${o.orderType} - ${o.address}</p>
-            ${o.location ? `<p class="mt-1"><a href="${o.location}" target="_blank" class="text-amber-400 underline font-bold text-xs"><i class="fa-solid fa-map-location-dot"></i> View Customer GPS Location</a></p>` : ''}
-            <p class="text-xs text-slate-300 font-medium mt-1">Items: ${o.itemsSummary || 'Pizza'}</p>
-          </div>
-          <div class="text-right flex flex-col justify-between items-end">
-            <span class="text-xl font-black text-amber-400">₹${o.total}</span>
-            <span class="text-xs text-green-400 font-bold">● ${o.status || 'Received'}</span>
-          </div>
-        </div>
-      `).join("");
-    }
-  </script>
+  <script src="js/admin.js"></script>
 </body>
 </html>

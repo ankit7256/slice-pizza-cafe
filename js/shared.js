@@ -1,22 +1,12 @@
-// Slice Pizza & Cafe - Cloud Firestore & Real-Time Sync Bus
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDummyKeyReplaceWithYourOwnIfAvailable",
-  authDomain: "slice-pizza-cafe.firebaseapp.com",
-  projectId: "slice-pizza-cafe",
-  storageBucket: "slice-pizza-cafe.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
-};
-
+const CONFIG_STORAGE_KEY = "slice_site_config_v7";
+const ORDERS_STORAGE_KEY = "slice_orders_list_v7";
 const CLOUD_SYNC_URL = "https://slice-pizza-default-rtdb.firebaseio.com";
-const CONFIG_STORAGE_KEY = "slice_site_config_v6";
-const ORDERS_STORAGE_KEY = "slice_orders_list_v6";
 
 const DEFAULT_STORE_CONFIG = {
   shopName: "Slice Pizza & Cafe",
-  phone: "917667610195",
+  phone: "7256804904",
   announcement: "🔥 Freshly Baked Hand-Tossed Pizzas & Cafe Specials! Free Delivery on all local orders!",
-  upiId: "7667610195@upi",
+  upiId: "7256804904@upi",
   customQrUrl: "",
   instagramUrl: "https://instagram.com/",
   categories: ["Veg Pizza", "Non-Veg Pizza", "Burgers", "Cafe & Shakes", "Snacks & Sides"],
@@ -35,7 +25,7 @@ const DEFAULT_STORE_CONFIG = {
       title: "Thick Cold Coffee & Chocolate Shakes",
       subtitle: "Freshly brewed Arabica espresso blended with premium cream & ice cream.",
       image: "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=1200&auto=format&fit=crop&q=80",
-      targetItemId: "6"
+      targetItemId: "5"
     },
     {
       id: "b3",
@@ -43,7 +33,7 @@ const DEFAULT_STORE_CONFIG = {
       title: "Crisp Double Patty Maharaja Burgers",
       subtitle: "Layered with English cheddar, fresh lettuce & house secret cocktail sauce.",
       image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&auto=format&fit=crop&q=80",
-      targetItemId: "5"
+      targetItemId: "4"
     }
   ],
   menu: [
@@ -103,7 +93,13 @@ const DEFAULT_STORE_CONFIG = {
   ]
 };
 
-// Cloud Realtime Fetch & Save
+async function hashSHA256(text) {
+  const msgBuffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function fetchCloudConfig() {
   try {
     const res = await fetch(`${CLOUD_SYNC_URL}/storeConfig.json`);
@@ -121,6 +117,10 @@ async function fetchCloudConfig() {
 
 async function saveCloudConfig(config) {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
+  try {
+    const bc = new BroadcastChannel("slice_sync_v7");
+    bc.postMessage({ type: "CONFIG_UPDATED", config });
+  } catch (e) {}
   try {
     await fetch(`${CLOUD_SYNC_URL}/storeConfig.json`, {
       method: "PUT",
@@ -150,6 +150,11 @@ async function postNewOrderToCloud(order) {
   const localOrders = JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || "[]");
   localOrders.unshift(order);
   localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(localOrders));
+
+  try {
+    const bc = new BroadcastChannel("slice_sync_v7");
+    bc.postMessage({ type: "ORDER_PLACED", order });
+  } catch (e) {}
 
   try {
     await fetch(`${CLOUD_SYNC_URL}/orders.json`, {
@@ -195,4 +200,13 @@ function playKitchenChime() {
     osc2.start(now + 0.18);
     osc2.stop(now + 1.0);
   } catch (e) {}
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
 }

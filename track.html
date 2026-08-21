@@ -35,7 +35,7 @@
       <h1 class="text-3xl sm:text-4xl font-black text-gray-950">Aapka Order Kahan Tak Pahuncha?</h1>
       <p class="text-gray-600 text-sm">Apna 10-Digit Mobile Number ya Order ID enter karein.</p>
       <div class="max-w-md mx-auto pt-4 flex gap-2">
-        <input type="text" id="track-search-input" placeholder="Enter Mobile No (Ex: 9876543210)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm">
+        <input type="text" id="track-search-input" placeholder="Enter Mobile No (Ex: 7256804904)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm">
         <button onclick="searchOrderStatus()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-2xl shadow transition">Track</button>
       </div>
     </div>
@@ -55,10 +55,10 @@
       }
     });
 
-    function searchOrderStatus() {
+    async function searchOrderStatus() {
       const q = document.getElementById("track-search-input").value.trim().toLowerCase();
       const container = document.getElementById("tracking-result-container");
-      const orders = getAllOrders();
+      const orders = await fetchCloudOrders();
 
       if (!q) {
         container.innerHTML = `<div class="bg-white p-8 rounded-3xl border border-gray-100 text-center shadow-sm"><p class="text-sm font-bold text-gray-600">Mobile number enter karein.</p></div>`;

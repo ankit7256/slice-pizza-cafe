@@ -15,8 +15,8 @@
   </div>
   <script src="js/shared.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const config = getSiteConfig();
+    document.addEventListener("DOMContentLoaded", async () => {
+      const config = await fetchCloudConfig();
       const grid = document.getElementById("cust-grid");
       if (grid && config.customers) {
         grid.innerHTML = config.customers.map(c => `

@@ -8,32 +8,32 @@ let currentUploadedImageBase64 = "";
 const DEFAULT_HASH = "ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  siteConfig = getSiteConfig();
+  siteConfig = await fetchCloudConfig();
   checkAuthSession();
   setupRealtimeListeners();
 });
 
 function setupRealtimeListeners() {
   try {
-    const bc = new BroadcastChannel("slice_sync_channel_v5");
+    const bc = new BroadcastChannel("slice_sync_v7");
     bc.onmessage = (ev) => {
       if (ev.data && ev.data.type === "ORDER_PLACED") {
-        playOrderNotificationSound();
+        playKitchenChime();
         renderOrdersQueue();
       }
     };
-  } catch(e) {}
+  } catch (e) {}
 
   window.addEventListener("storage", (e) => {
-    if (e.key === ORDERS_KEY) {
-      playOrderNotificationSound();
+    if (e.key === ORDERS_STORAGE_KEY) {
+      playKitchenChime();
       renderOrdersQueue();
     }
   });
 }
 
 function checkAuthSession() {
-  const isAuth = sessionStorage.getItem("slice_admin_auth_v5");
+  const isAuth = sessionStorage.getItem("slice_admin_auth_v6");
   if (isAuth === "true") {
     showDashboard();
   }
@@ -50,10 +50,10 @@ async function handleSecureLogin(e) {
 
   const passInput = document.getElementById("admin-pass-input").value.trim();
   const inputHash = await hashSHA256(passInput);
-  const currentHash = localStorage.getItem("slice_admin_hash_v5") || DEFAULT_HASH;
+  const currentHash = localStorage.getItem("slice_admin_hash_v6") || DEFAULT_HASH;
 
   if (passInput === "admin1234" || inputHash === currentHash || inputHash === DEFAULT_HASH) {
-    sessionStorage.setItem("slice_admin_auth_v5", "true");
+    sessionStorage.setItem("slice_admin_auth_v6", "true");
     failedAttempts = 0;
     showDashboard();
   } else {
@@ -93,7 +93,6 @@ function showDashboard() {
   if (authScreen) authScreen.classList.add("hidden");
   if (dashScreen) dashScreen.classList.remove("hidden");
   
-  siteConfig = getSiteConfig();
   renderOrdersQueue();
   renderCategoryTags();
   populateCategorySelect();
@@ -106,13 +105,13 @@ function showDashboard() {
 
 function handleAdminLogout() {
   if (orderPollingInterval) clearInterval(orderPollingInterval);
-  sessionStorage.removeItem("slice_admin_auth_v5");
+  sessionStorage.removeItem("slice_admin_auth_v6");
   window.location.reload();
 }
 
-function publishAllChangesLive() {
-  saveSiteConfig(siteConfig);
-  alert("✅ All changes saved & published to live website!");
+async function publishAllChangesLive() {
+  await saveCloudConfig(siteConfig);
+  alert("✅ All changes saved & published to live website across all customer devices!");
 }
 
 function switchTab(tabId) {
@@ -138,26 +137,27 @@ function switchTab(tabId) {
 }
 
 function startOrderPolling() {
-  const currentOrders = getAllOrders();
-  previousOrderCount = currentOrders.length;
-
+  pollOrders();
   if (orderPollingInterval) clearInterval(orderPollingInterval);
-  orderPollingInterval = setInterval(() => {
-    const latestOrders = getAllOrders();
-    if (latestOrders.length > previousOrderCount) {
-      playOrderNotificationSound();
-      renderOrdersQueue();
-    }
-    previousOrderCount = latestOrders.length;
-  }, 2500);
+  orderPollingInterval = setInterval(pollOrders, 3000);
 }
 
-function renderOrdersQueue() {
-  const container = document.getElementById("admin-orders-list-container");
+async function pollOrders() {
+  const orders = await fetchCloudOrders();
   const tabCount = document.getElementById("tab-count-orders");
-  const orders = getAllOrders();
-
   if (tabCount) tabCount.innerText = orders.length;
+
+  if (orders.length > previousOrderCount && previousOrderCount !== 0) {
+    playKitchenChime();
+    renderOrdersQueue();
+  }
+  previousOrderCount = orders.length;
+}
+
+async function renderOrdersQueue() {
+  const container = document.getElementById("admin-orders-list-container");
+  const orders = await fetchCloudOrders();
+
   if (!container) return;
 
   if (orders.length === 0) {
@@ -197,7 +197,7 @@ function renderOrdersQueue() {
       <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-slate-400">Status:</span>
-          <select onchange="updateOrderStatus('${order.id}', this.value)" class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-white">
+          <select onchange="updateOrderStatus('${order.id}', this.value, '${order.firebaseUrlKey || ''}')" class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-bold text-white">
             <option value="Received" ${order.status === 'Received' ? 'selected' : ''}>⏳ Received</option>
             <option value="Preparing" ${order.status === 'Preparing' ? 'selected' : ''}>🔥 Preparing</option>
             <option value="Out for Delivery" ${order.status === 'Out for Delivery' ? 'selected' : ''}>🛵 Out for Delivery</option>
@@ -215,12 +215,13 @@ function renderOrdersQueue() {
   `).join("");
 }
 
-function updateOrderStatus(id, newStatus) {
-  const orders = getAllOrders();
+async function updateOrderStatus(id, newStatus, firebaseUrlKey) {
+  await updateCloudOrderStatus(firebaseUrlKey, newStatus);
+  const orders = JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || "[]");
   const found = orders.find(o => o.id === id);
   if (found) {
     found.status = newStatus;
-    saveOrdersList(orders);
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     renderOrdersQueue();
   }
 }
@@ -234,9 +235,9 @@ function openWhatsAppChat(phone, orderId, status) {
 
 function clearCompletedOrders() {
   if (confirm("Delivered orders ko list se hatayein?")) {
-    let orders = getAllOrders();
+    let orders = JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || "[]");
     orders = orders.filter(o => o.status !== "Delivered");
-    saveOrdersList(orders);
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     renderOrdersQueue();
   }
 }
@@ -375,10 +376,9 @@ function handleSaveMenuItem(e) {
     siteConfig.menu.unshift({ id: "m_" + Date.now(), ...itemObj });
   }
 
-  saveSiteConfig(siteConfig);
   resetMenuForm();
   renderAdminMenu();
-  alert("Item save ho gaya!");
+  alert("Item list me update ho gaya! Upar 'Save & Publish Live' dabayein taaki sabhi customers ko live dikhe.");
 }
 
 function editMenuItem(id) {
@@ -468,14 +468,12 @@ function updateBannerField(id, field, val) {
   const banner = siteConfig.banners.find(b => b.id === id);
   if (banner) {
     banner[field] = val;
-    saveSiteConfig(siteConfig);
   }
 }
 
 function populateSettingsForms() {
-  siteConfig = getSiteConfig();
-  document.getElementById("setting-upi-id").value = siteConfig.upiId || "7667610195@upi";
-  document.getElementById("setting-phone").value = siteConfig.phone || "917667610195";
+  document.getElementById("setting-upi-id").value = siteConfig.upiId || "7256804904@upi";
+  document.getElementById("setting-phone").value = siteConfig.phone || "7256804904";
   document.getElementById("setting-instagram").value = siteConfig.instagramUrl || "";
   document.getElementById("setting-announcement").value = siteConfig.announcement || "";
   if (siteConfig.customQrUrl) {
@@ -491,15 +489,13 @@ async function handleQrFileUpload(e) {
     siteConfig.customQrUrl = base64;
     document.getElementById("custom-qr-preview").src = base64;
     document.getElementById("custom-qr-preview-container").classList.remove("hidden");
-    saveSiteConfig(siteConfig);
   }
 }
 
 function handleSaveUpiSettings(e) {
   e.preventDefault();
   siteConfig.upiId = document.getElementById("setting-upi-id").value.trim();
-  saveSiteConfig(siteConfig);
-  alert("UPI Settings save ho gayi!");
+  alert("UPI Settings updated! Upar 'Save & Publish Live' dabayein.");
 }
 
 function handleSaveContactSettings(e) {
@@ -509,6 +505,5 @@ function handleSaveContactSettings(e) {
   siteConfig.phone = cleanPhone;
   siteConfig.instagramUrl = document.getElementById("setting-instagram").value.trim();
   siteConfig.announcement = document.getElementById("setting-announcement").value.trim();
-  saveSiteConfig(siteConfig);
-  alert(`Store Phone (+${cleanPhone}) update ho gaya!`);
+  alert(`Phone (+${cleanPhone}) update ho gaya! Upar 'Save & Publish Live' dabayein.`);
 }

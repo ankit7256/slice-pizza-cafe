@@ -8,8 +8,8 @@ let pendingWhatsAppMessage = "";
 let lastGeneratedOrderId = "";
 let detectedUserLocation = "";
 
-document.addEventListener("DOMContentLoaded", () => {
-  siteConfig = getSiteConfig();
+document.addEventListener("DOMContentLoaded", async () => {
+  siteConfig = await fetchCloudConfig();
   renderAnnouncement();
   applySocialAndBrandLinks();
   initHeroSlider();
@@ -19,17 +19,17 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCartUI();
 
   try {
-    const bc = new BroadcastChannel("slice_sync_channel_v5");
-    bc.onmessage = (ev) => {
+    const bc = new BroadcastChannel("slice_sync_v7");
+    bc.onmessage = async (ev) => {
       if (ev.data && ev.data.type === "CONFIG_UPDATED") {
-        siteConfig = getSiteConfig();
+        siteConfig = await fetchCloudConfig();
         renderAnnouncement();
         applySocialAndBrandLinks();
         renderCategories();
         renderMenu();
       }
     };
-  } catch(e) {}
+  } catch (e) {}
 });
 
 function renderAnnouncement() {
@@ -40,7 +40,8 @@ function renderAnnouncement() {
     if (spanEl) spanEl.innerText = siteConfig.announcement;
   }
   if (topPhone) {
-    topPhone.innerHTML = `<i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +${siteConfig.phone || '917667610195'}`;
+    const clean = (siteConfig.phone || '7256804904').replace(/[^0-9]/g, '');
+    topPhone.innerHTML = `<i class="fa-solid fa-phone mr-1"></i> Call / WhatsApp: +${clean}`;
   }
 }
 
@@ -50,7 +51,7 @@ function applySocialAndBrandLinks() {
   const footerWa = document.getElementById("footer-whatsapp-link");
   const footerPhone = document.getElementById("footer-phone-display");
 
-  const cleanPhone = (siteConfig.phone || '917667610195').replace(/[^0-9]/g, '');
+  const cleanPhone = (siteConfig.phone || '7256804904').replace(/[^0-9]/g, '');
 
   if (navInsta) navInsta.href = siteConfig.instagramUrl || "https://instagram.com/";
   if (footerInsta) footerInsta.href = siteConfig.instagramUrl || "https://instagram.com/";
@@ -525,14 +526,14 @@ function fetchCurrentLiveLocation() {
   );
 }
 
-function handlePlaceOrder(e) {
+async function handlePlaceOrder(e) {
   e.preventDefault();
   if (cart.length === 0) {
     alert("Cart empty hai!");
     return;
   }
 
-  siteConfig = getSiteConfig();
+  siteConfig = await fetchCloudConfig();
 
   const name = document.getElementById("cust-name").value.trim();
   const phone = document.getElementById("cust-phone").value.trim();
@@ -559,9 +560,7 @@ function handlePlaceOrder(e) {
     itemsSummary: cart.map(i => `${i.name} (${i.qty})`).join(", ")
   };
 
-  const existingOrders = getAllOrders();
-  existingOrders.unshift(newOrder);
-  saveOrdersList(existingOrders);
+  await postNewOrderToCloud(newOrder);
 
   localStorage.setItem("slice_last_order_phone", phone);
 
@@ -608,7 +607,7 @@ function openUpiModal(amount) {
   const qrImg = document.getElementById("upi-qr-image");
   const upiIdDisplay = document.getElementById("upi-id-display");
   
-  const upiId = siteConfig.upiId || "7667610195@upi";
+  const upiId = siteConfig.upiId || "7256804904@upi";
   amountDisplay.innerText = amount;
   if (upiIdDisplay) upiIdDisplay.innerText = `UPI ID: ${upiId}`;
 
@@ -628,14 +627,13 @@ function closeUpiModal() {
 
 function proceedToWhatsAppAfterPayment() {
   closeUpiModal();
-  const existingOrders = getAllOrders();
+  const existingOrders = JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || "[]");
   const found = existingOrders.find(o => o.id === lastGeneratedOrderId);
   completeOrderProcess(pendingWhatsAppMessage, found);
 }
 
 function completeOrderProcess(message, orderObj) {
-  siteConfig = getSiteConfig();
-  const cleanPhone = (siteConfig.phone || "917667610195").replace(/[^0-9]/g, '');
+  const cleanPhone = (siteConfig.phone || "7256804904").replace(/[^0-9]/g, '');
   const targetPhone = cleanPhone.startsWith("91") ? cleanPhone : "91" + cleanPhone;
   const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
   window.open(url, "_blank");
